@@ -7,6 +7,10 @@
 
 import Foundation
 
+public protocol Requestable: Decodable {
+
+}
+
 public protocol Fetchable: Decodable {
     var id: String { get }
 }
@@ -33,12 +37,13 @@ final public class APIClient {
         self.session = session
     }
 
-    public func fetch<T>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) where T: Fetchable {
-        let request = URLRequest(url: URL(fileURLWithPath: "foo"))
-        perform(request: request) { result in
-            self.parseDecodable(result: result, completion: completion)
-        }
-    }
+//    public func fetch<T>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) where T: Fetchable {
+//        // inject requests
+//        let request = URLRequest(url: URL(fileURLWithPath: "foo"))
+//        perform(request: request) { result in
+//            self.parseDecodable(result: result, completion: completion)
+//        }
+//    }
 
     internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
         switch result {
@@ -52,11 +57,11 @@ final public class APIClient {
                 DispatchQueue.main.async {
                     completion(.failure(.decodingError(decodingError)))
                 }
+            } catch let error {
+                DispatchQueue.main.async {
+                    completion(.failure(.parseError(error)))
+                }
             }
-            catch {
-                fatalError("Unhandled error raised.")
-            }
-
         case .failure(let error):
             DispatchQueue.main.async {
                 completion(.failure(error))
@@ -86,16 +91,18 @@ final public class APIClient {
             return
         }
 
+        let body = String(data: data, encoding: .utf8) ?? "<no body>"
         switch http.statusCode {
         case 200...299:
             completion(.success(data))
+        case 300...399:
+            completion(.failure(.redirectionError(http.statusCode, body)))
         case 400...499:
-            let body = String(data: data, encoding: .utf8) ?? "<no body>"
             completion(.failure(.requestError(http.statusCode, body)))
         case 500...599:
-            completion(.failure(.serverError))
+            completion(.failure(.serverError(http.statusCode, body)))
         default:
-            fatalError("Unhandled HTTP status code: \(http.statusCode)")
+            completion(.failure(.unhandledHTTPStatus(http.statusCode, body)))
         }
     }
 }

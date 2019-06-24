@@ -41,11 +41,17 @@ final class APIClientTests: XCTestCase {
     let validResponse = HTTPURLResponse(
         url: URL(fileURLWithPath: "path"), statusCode: 200, httpVersion: nil, headerFields: nil
     )
+    let redirectionErrorResponse = HTTPURLResponse(
+        url: URL(fileURLWithPath: "path"), statusCode: 300, httpVersion: nil, headerFields: nil
+    )
     let requestErrorResponse = HTTPURLResponse(
         url: URL(fileURLWithPath: "path"), statusCode: 403, httpVersion: nil, headerFields: nil
     )
     let serverErrorResponse = HTTPURLResponse(
         url: URL(fileURLWithPath: "path"), statusCode: 500, httpVersion: nil, headerFields: nil
+    )
+    let unhandledErrorResponse = HTTPURLResponse(
+        url: URL(fileURLWithPath: "path"), statusCode: 900, httpVersion: nil, headerFields: nil
     )
 
     let request = URLRequest(url: URL(fileURLWithPath: "/foo"))
@@ -61,17 +67,12 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success:
-                XCTFail("There should be no data.")
-            case .failure(let error):
-                switch error {
-                case .networkingError:
-                    XCTAssertTrue(true)
-                default:
-                    XCTFail()
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .networkingError = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail.")
         }
 
     }
@@ -82,17 +83,12 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success:
-                XCTFail("There should be no data.")
-            case .failure(let error):
-                switch error {
-                case .invalidResponse:
-                    XCTAssertTrue(true)
-                default:
-                    XCTFail()
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .invalidResponse = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail.")
         }
     }
 
@@ -103,17 +99,28 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success:
-                XCTFail("There should be no data.")
-            case .failure(let error):
-                switch error {
-                case .invalidResponse:
-                    XCTAssertTrue(true)
-                default:
-                    XCTFail()
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .invalidResponse = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail.")
+        }
+    }
+
+    func testAPIClientPerformRedirectionError() {
+        let session = URLSessionMock()
+        session.response = redirectionErrorResponse
+        session.data = "Data".data(using: .utf8)!
+
+        let client = APIClient(session: session)
+        client.perform(request: request) { result in
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .redirectionError = error {
+                errorToTest = error
+            }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail.")
         }
     }
 
@@ -124,17 +131,12 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success:
-                XCTFail("There should be no data.")
-            case .failure(let error):
-                switch error {
-                case .requestError:
-                    XCTAssertTrue(true)
-                default:
-                    XCTFail()
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .requestError = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail.")
         }
     }
 
@@ -145,17 +147,28 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success:
-                XCTFail("There should be no data.")
-            case .failure(let error):
-                switch error {
-                case .serverError:
-                    XCTAssertTrue(true)
-                default:
-                    XCTFail()
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .serverError = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
+        }
+    }
+
+    func testAPIClientPerformUnhandledError() {
+        let session = URLSessionMock()
+        session.response = unhandledErrorResponse
+        session.data = "Data".data(using: .utf8)!
+
+        let client = APIClient(session: session)
+        client.perform(request: request) { result in
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .unhandledHTTPStatus = error {
+                errorToTest = error
+            }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
         }
     }
 
@@ -167,12 +180,12 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: session)
         client.perform(request: request) { result in
-            switch result {
-            case .success(let data):
-                XCTAssertNotNil(data)
-            case .failure(let error):
-                XCTAssertNil(error)
+            var dataToTest: Data?
+            if case .success(let data) = result {
+                dataToTest = data
             }
+
+            XCTAssertNotNil(dataToTest, "Success result did not return data")
         }
     }
 
@@ -180,8 +193,10 @@ final class APIClientTests: XCTestCase {
         ("testAPIClientPerformNetworkingError", testAPIClientPerformNetworkingError),
         ("testAPIClientPerformInvalidResponse", testAPIClientPerformInvalidResponseNoResponse),
         ("testAPIClientPerformInvalidResponseNoData", testAPIClientPerformInvalidResponseNoData),
+        ("testAPIClientPerformRedirectionError", testAPIClientPerformRedirectionError),
         ("testAPIClientPerformRequestError", testAPIClientPerformRequestError),
         ("testAPIClientPerformServerError", testAPIClientPerformServerError),
+        ("testAPIClientPerformUnhandledError", testAPIClientPerformUnhandledError),
         ("testAPIClientPerformSuccess", testAPIClientPerformSuccess)
     ]
 
@@ -203,13 +218,13 @@ final class APIClientTests: XCTestCase {
 
         client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
             exp.fulfill()
-            switch result {
-            case .success(let user):
-                XCTAssertEqual(user.name, "Taylor")
-            case .failure(let error):
-                dump(error)
-                XCTFail()
+            var userToTest: TestUser?
+            if case .success(let user) = result {
+                userToTest = user
             }
+
+            XCTAssertNotNil(userToTest, "Success result did not return data")
+            XCTAssertEqual(userToTest?.name, "Taylor")
         }
 
         wait(for: [exp], timeout: 3.0)
@@ -223,17 +238,12 @@ final class APIClientTests: XCTestCase {
 
         client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
             exp.fulfill()
-            switch result {
-            case .success:
-                XCTFail("Should not decode any data")
-            case .failure(let error):
-                switch error {
-                case .decodingError:
-                    XCTAssert(true)
-                default:
-                    XCTFail("Did not use Decodable error")
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .decodingError = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
         }
 
         wait(for: [exp], timeout: 3.0)
@@ -247,17 +257,12 @@ final class APIClientTests: XCTestCase {
 
         client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
             exp.fulfill()
-            switch result {
-            case .success:
-                XCTFail("Should not decode any data")
-            case .failure(let error):
-                switch error {
-                case .invalidResponse:
-                    XCTAssert(true)
-                default:
-                    XCTFail("Did not use Decodable error")
-                }
+            var errorToTest: APIError?
+            if case .failure(let error) = result, case .invalidResponse = error {
+                errorToTest = error
             }
+
+            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
         }
 
         wait(for: [exp], timeout: 3.0)
