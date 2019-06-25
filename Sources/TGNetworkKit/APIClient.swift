@@ -7,14 +7,6 @@
 
 import Foundation
 
-public protocol Requestable: Decodable {
-
-}
-
-public protocol Fetchable: Decodable {
-    var id: String { get }
-}
-
 final public class APIClient {
 
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
@@ -23,6 +15,7 @@ final public class APIClient {
     private let session: URLSession
 
     private var jsonDecoder: JSONDecoder {
+
         let decoder = JSONDecoder()
         if useSnakeCaseDecoding {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -34,38 +27,44 @@ final public class APIClient {
     public var useSnakeCaseDecoding: Bool = true
 
     init(session: URLSession = .shared) {
+
         self.session = session
     }
 
-//    public func fetch<T>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) where T: Fetchable {
-//        // inject requests
-//        let request = URLRequest(url: URL(fileURLWithPath: "foo"))
+    public func create<T: Creatable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
+
+        let url = T.baseURL.appendingPathComponent(T.path)
+        var request = URLRequest(url: url)
+        request.httpMethod = T.httpMethod
+
+        performAndParse(request: request, completion: completion)
+    }
+
+    public func fetch<T: Fetchable>(_ model: T.Type, id: T.ID, completion: @escaping (Result<T, APIError>) -> Void) {
+
+        let url = T.baseURL.appendingPathComponent(T.path)
+        var request = URLRequest(url: url)
+        request.httpMethod = T.httpMethod
+
+        performAndParse(request: request, completion: completion)
+
 //        perform(request: request) { result in
 //            self.parseDecodable(result: result, completion: completion)
 //        }
-//    }
+    }
 
-    internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
-        switch result {
-        case .success(let data):
-            do {
-                let object = try jsonDecoder.decode(T.self, from: data)
-                DispatchQueue.main.async {
-                    completion(.success(object))
-                }
-            } catch let decodingError as DecodingError {
-                DispatchQueue.main.async {
-                    completion(.failure(.decodingError(decodingError)))
-                }
-            } catch let error {
-                DispatchQueue.main.async {
-                    completion(.failure(.parseError(error)))
-                }
-            }
-        case .failure(let error):
-            DispatchQueue.main.async {
-                completion(.failure(error))
-            }
+    public func update<T: Updatable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
+
+    }
+
+    public func delete<T: Deletable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
+
+    }
+
+    private func performAndParse<T: Requestable>(request: URLRequest, completion: @escaping (Result<T, APIError>) -> Void) {
+
+        perform(request: request) { result in
+            self.parseDecodable(result: result, completion: completion)
         }
     }
 
@@ -103,6 +102,31 @@ final public class APIClient {
             completion(.failure(.serverError(http.statusCode, body)))
         default:
             completion(.failure(.unhandledHTTPStatus(http.statusCode, body)))
+        }
+    }
+
+    internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
+
+        switch result {
+        case .success(let data):
+            do {
+                let object = try jsonDecoder.decode(T.self, from: data)
+                DispatchQueue.main.async {
+                    completion(.success(object))
+                }
+            } catch let decodingError as DecodingError {
+                DispatchQueue.main.async {
+                    completion(.failure(.decodingError(decodingError)))
+                }
+            } catch let error {
+                DispatchQueue.main.async {
+                    completion(.failure(.parseError(error)))
+                }
+            }
+        case .failure(let error):
+            DispatchQueue.main.async {
+                completion(.failure(error))
+            }
         }
     }
 }
