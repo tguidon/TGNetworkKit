@@ -23,7 +23,7 @@ class URLSessionMock: URLSession {
 
     override func dataTask(
         with request: URLRequest, completionHandler: @escaping (Data?, URLResponse?, Error?) -> Void
-        ) -> URLSessionDataTask {
+    ) -> URLSessionDataTask {
         let data = self.data
         let response = self.response
         let error = self.error
@@ -56,9 +56,49 @@ final class APIClientTests: XCTestCase {
 
     let request = URLRequest(url: URL(fileURLWithPath: "/foo"))
 
+    struct TestUser: Codable, Requestable {
+        static var baseURL: URL {
+            return URL(fileURLWithPath: "/path")
+        }
+
+        let name: String
+    }
+
     enum TestError: Error {
         case testError
     }
+
+    func testAPIClientRequestGET() {
+        let exp = expectation(description: "Request is made and model is returned.")
+
+        let response = TestUser(name: "Taylor")
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .prettyPrinted
+        let data = try! encoder.encode(response)
+
+        let session = URLSessionMock()
+        session.response = validResponse
+        session.data = data
+
+        let client = APIClient(session: session)
+        client.makeRequest(TestUser.self) { result in
+            exp.fulfill()
+
+            var testUser: TestUser?
+            if case .success(let user) = result {
+                testUser = user
+            }
+
+            XCTAssertNotNil(testUser)
+        }
+
+        wait(for: [exp], timeout: 3.0)
+    }
+
+    static var requestTests = [
+        ("testAPIClientRequestGET", testAPIClientRequestGET),
+    ]
+
 
     // This session is injected with an error, triggering `if let error`
     func testAPIClientPerformNetworkingError() {
@@ -199,10 +239,6 @@ final class APIClientTests: XCTestCase {
         ("testAPIClientPerformUnhandledError", testAPIClientPerformUnhandledError),
         ("testAPIClientPerformSuccess", testAPIClientPerformSuccess)
     ]
-
-    struct TestUser: Codable {
-        let name: String
-    }
 
     func testAPIClientParseDecodableSuccess() {
         let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")

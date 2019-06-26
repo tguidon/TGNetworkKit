@@ -9,60 +9,30 @@ import Foundation
 
 public protocol Requestable: Codable {
 
-    typealias HTTPMethod = String
-
     static var baseURL: URL { get }
 
-    static var path: String { get }
-
-    static var httpMethod: HTTPMethod { get }
+    static var path: String? { get }
 }
 
 public extension Requestable {
+
+    static var path: String? {
+        return nil
+    }
+
     static func makeRequest() -> URLRequest {
-        let url = self.baseURL.appendingPathComponent(self.path)
-        var request = URLRequest(url: url)
-        request.httpMethod = self.httpMethod
+        var url = self.baseURL
+        if let path = self.path {
+            url = url.appendingPathComponent(path)
+        }
+        let request = URLRequest(url: url)
 
         return request
     }
 }
 
-public protocol Identifiable {
+public protocol Identifiable: Requestable {
 
     typealias ID = String
     var id: ID { get }
-}
-
-public protocol Creatable: Requestable { }
-public protocol Fetchable: Requestable, Identifiable { }
-public protocol Updatable: Requestable, Identifiable { }
-public protocol Deletable: Requestable, Identifiable { }
-
-public extension Creatable {
-
-    static var httpMethod: Self.HTTPMethod {
-        return "POST"
-    }
-}
-
-public extension Fetchable {
-
-    static var httpMethod: Self.HTTPMethod {
-        return "GET"
-    }
-}
-
-public extension Updatable {
-
-    static var httpMethod: Self.HTTPMethod {
-        return "PATCH"
-    }
-}
-
-public extension Deletable {
-
-    static var httpMethod: Self.HTTPMethod {
-        return "DELETE"
-    }
 }

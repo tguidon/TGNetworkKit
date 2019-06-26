@@ -10,72 +10,37 @@ import XCTest
 
 final class RequestableTests: XCTestCase {
 
-    func testCreatableURLRequest() {
-
-        struct Model: Creatable {
+    func testRequestableMakeRequestWithPath() {
+        struct Model: Requestable {
 
             static var baseURL: URL {
-                URL(fileURLWithPath: "creatable")
+                return URL(string: "https://example.com")!
             }
 
-            static var path: String {
-                "/path/foo"
+            static var path: String? {
+                return "/path/to/data"
             }
         }
 
         let request = Model.makeRequest()
-        XCTAssertEqual(request.httpMethod, Model.httpMethod)
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path/to/data")
     }
 
-    func testFetchableURLRequest() {
-
-        struct Model: Fetchable {
-            var id: Self.ID = "1"
+    func testRequestableMakeRequestWithNilPath() {
+        struct Model: Requestable {
 
             static var baseURL: URL {
-                URL(fileURLWithPath: "creatable")
-            }
-
-            static var path: String {
-                "/path/foo"
+                return URL(string: "https://example.com")!
             }
         }
-    }
 
-    func testUpdatableURLRequest() {
-
-        struct Model: Updatable {
-            var id: Self.ID = "1"
-
-            static var baseURL: URL {
-                URL(fileURLWithPath: "creatable")
-            }
-
-            static var path: String {
-                "/path/foo"
-            }
-        }
-    }
-
-    func testDeletableURLRequest() {
-
-        struct Model: Deletable {
-            var id: Self.ID = "1"
-
-            static var baseURL: URL {
-                URL(fileURLWithPath: "creatable")
-            }
-
-            static var path: String {
-                "/path/foo"
-            }
-        }
+        XCTAssertNil(Model.path)
+        let request = Model.makeRequest()
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com")
     }
 
     static var requestableTests = [
-        ("testCreatableURLRequest", testCreatableURLRequest),
-        ("testFetchableURLRequest", testFetchableURLRequest),
-        ("testUpdatableURLRequest", testUpdatableURLRequest),
-        ("testDeletableURLRequest", testDeletableURLRequest)
+        ("testRequestableMakeRequestWithPath", testRequestableMakeRequestWithPath),
+        ("testRequestableMakeRequestWithNilPath", testRequestableMakeRequestWithNilPath)
     ]
 }

@@ -7,6 +7,15 @@
 
 import Foundation
 
+public enum HTTPMethod: String {
+    case get = "GET"
+    case post = "POST"
+    case patch = "PATCH"
+    case delete = "DELETE"
+}
+
+
+
 final public class APIClient {
 
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
@@ -31,38 +40,22 @@ final public class APIClient {
         self.session = session
     }
 
-    public func create<T: Creatable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
-
-        let url = T.baseURL.appendingPathComponent(T.path)
-        var request = URLRequest(url: url)
-        request.httpMethod = T.httpMethod
-
-        performAndParse(request: request, completion: completion)
-    }
-
-    public func fetch<T: Fetchable>(_ model: T.Type, id: T.ID, completion: @escaping (Result<T, APIError>) -> Void) {
-
-        let url = T.baseURL.appendingPathComponent(T.path)
-        var request = URLRequest(url: url)
-        request.httpMethod = T.httpMethod
-
-        performAndParse(request: request, completion: completion)
-
+//    public func fetch<T: Requestable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
+//
+//        var request = T.makeRequest()
+//        request.httpMethod = HTTPMethod.get.rawValue
+//
 //        perform(request: request) { result in
 //            self.parseDecodable(result: result, completion: completion)
 //        }
-    }
+//    }
 
-    public func update<T: Updatable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
+    public func makeRequest<T: Requestable>(
+        _ model: T.Type, method: HTTPMethod = .get, completion: @escaping (Result<T, APIError>) -> Void
+    ) {
 
-    }
-
-    public func delete<T: Deletable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
-
-    }
-
-    private func performAndParse<T: Requestable>(request: URLRequest, completion: @escaping (Result<T, APIError>) -> Void) {
-
+        var request = T.makeRequest()
+        request.httpMethod = method.rawValue
         perform(request: request) { result in
             self.parseDecodable(result: result, completion: completion)
         }
