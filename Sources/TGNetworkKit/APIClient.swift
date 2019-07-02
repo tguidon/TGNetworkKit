@@ -7,24 +7,17 @@
 
 import Foundation
 
-public enum HTTPMethod: String {
-    case get = "GET"
-    case post = "POST"
-    case patch = "PATCH"
-    case delete = "DELETE"
-}
-
-
-
+/// API Client for making Requestable requests
 final public class APIClient {
 
+    // Data Response Result
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
 
-    // Defaults to shared session
+    // Defaults to shared URLSession
     private let session: URLSession
 
+    // JSONDecoder for handling responses
     private var jsonDecoder: JSONDecoder {
-
         let decoder = JSONDecoder()
         if useSnakeCaseDecoding {
             decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -35,25 +28,27 @@ final public class APIClient {
     // Set value to false to not convert from snake case
     public var useSnakeCaseDecoding: Bool = true
 
-    init(session: URLSession = .shared) {
+    /**
+     Initializes a new API client with a shared session by default
 
+     - Parameters:
+        - session: URLSession to use in client
+     */
+    init(session: URLSession = .shared) {
         self.session = session
     }
 
-//    public func fetch<T: Requestable>(_ model: T.Type, completion: @escaping (Result<T, APIError>) -> Void) {
-//
-//        var request = T.makeRequest()
-//        request.httpMethod = HTTPMethod.get.rawValue
-//
-//        perform(request: request) { result in
-//            self.parseDecodable(result: result, completion: completion)
-//        }
-//    }
+    /**
+     Makes requests that confirm to the Requestable protocol
 
+     - Parameters:
+        - model: The concrete Requestable type
+        - method: HTTPMethod to use in quest, the default is a GET
+        - completion: Handler resolves with Result<T: APIError>
+     */
     public func makeRequest<T: Requestable>(
         _ model: T.Type, method: HTTPMethod = .get, completion: @escaping (Result<T, APIError>) -> Void
     ) {
-
         var request = T.makeRequest()
         request.httpMethod = method.rawValue
         perform(request: request) { result in
@@ -61,18 +56,34 @@ final public class APIClient {
         }
     }
 
-    internal func perform(request: URLRequest, completion: @escaping DataResultCompletion) {
+    /**
+     Performs the URLRequest and handles the data task. Fires off the task.
 
+     - Parameters:
+         - request: URLRequest passed in from makeRequest method
+         - completion: Handler resolves with Result<Data: APIError>
+     */
+    internal func perform(request: URLRequest, completion: @escaping DataResultCompletion) {
         let task = session.dataTask(with: request) { (data, response, error) in
             self.handleDataTask(data, response: response, error: error, completion: completion)
         }
         task.resume()
     }
 
+    /**
+     Handles the bulk of the API Client data task. Verifies if the data, response, and error are valid
+     and calls the completion handler upon verification.
+
+     - Parameters:
+         - data: Optional Data from data task
+         - response: Optional URLResponse from the data task
+         - error: Optional Error from the data task
+         - completion: Handler resolves with Result<Data: APIError>
+
+     */
     private func handleDataTask(
         _ data: Data?, response: URLResponse?, error: Error?, completion: @escaping DataResultCompletion
     ) {
-
         if let error = error  {
             completion(.failure(.networkingError(error)))
             return
@@ -98,8 +109,14 @@ final public class APIClient {
         }
     }
 
-    internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
+    /**
+     Parses the data response into a response of T: Decodable
 
+     - Parameters:
+         - result: Result<Data, APIError>
+         - completion: Handler resoleves with Result<T: APIError>
+     */
+    internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
         switch result {
         case .success(let data):
             do {
