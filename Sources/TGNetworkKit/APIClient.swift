@@ -47,10 +47,17 @@ final public class APIClient {
         - completion: Handler resolves with Result<T: APIError>
      */
     public func makeRequest<T: Requestable>(
-        _ model: T.Type, method: HTTPMethod = .get, completion: @escaping (Result<T, APIError>) -> Void
+        _ model: T.Type,
+        method: HTTPMethod = .get,
+        body: Encodable? = nil,
+        completion: @escaping (Result<T, APIError>) -> Void
     ) {
         var request = T.makeRequest()
         request.httpMethod = method.rawValue
+        if let body = body {
+            request.httpBody = body.data
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
         perform(request: request) { result in
             self.parseDecodable(result: result, completion: completion)
         }
@@ -82,7 +89,10 @@ final public class APIClient {
 
      */
     private func handleDataTask(
-        _ data: Data?, response: URLResponse?, error: Error?, completion: @escaping DataResultCompletion
+        _ data: Data?,
+        response: URLResponse?,
+        error: Error?,
+        completion: @escaping DataResultCompletion
     ) {
         if let error = error  {
             completion(.failure(.networkingError(error)))
