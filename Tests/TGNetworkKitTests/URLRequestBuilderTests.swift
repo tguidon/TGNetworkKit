@@ -10,33 +10,13 @@ import XCTest
 
 final class URLRequestBuilderTests: XCTestCase {
 
-    struct MockBody: Encodable {
-        let data: DataBody
-
-        init(id: String, value: Int) {
-            let data = DataBody(id: id, value: value)
-            self.data = data
-        }
-    }
-
-    struct DataBody: Encodable {
-        let id: String
-        let value: Int
-    }
-
     func testURLRequestBuilderBuild() {
-        var components = URLComponents()
-        components.scheme = "https"
-        components.host = "example.com"
-        let method = HTTPMethod.get
-        let body = MockBody(id: "abc", value: 100)
-        let urlParameters = ["foo": "bar", "baz": "bip"]
+        let apiRequest = MockAPIRequest()
+        let builder = URLRequestBuilder()
+        let request = try? builder.build(apiRequest: apiRequest)
 
-        let builder = URLRequestBuilder(urlComponents: components, method: method, body: body, urlParameters: urlParameters)
-        let request = try? builder.build()
-
-        XCTAssertEqual(request?.url, URL(string: "https://example.com?foo=bar&baz=bip"))
-        XCTAssertEqual(request?.url?.absoluteString, "https://example.com?foo=bar&baz=bip")
+        XCTAssertNotNil(request?.url)
+        XCTAssertNotNil(request?.url?.absoluteString)
         XCTAssertEqual(request?.httpMethod, "GET")
         XCTAssertNotNil(request?.httpBody)
     }

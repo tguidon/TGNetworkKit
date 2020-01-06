@@ -7,39 +7,25 @@
 
 import Foundation
 
-// URL parameteres
-public typealias Parameters = [String: String]
+struct URLRequestBuilder {
 
-class URLRequestBuilder {
-
-    var urlComponents: URLComponents
-    var method: HTTPMethod = .get
-    var body: Encodable?
-    var urlParameters: Parameters?
-
-    init(urlComponents: URLComponents, method: HTTPMethod, body: Encodable?, urlParameters: Parameters?) {
-        self.urlComponents = urlComponents
-        self.method = method
-        self.body = body
-        self.urlParameters = urlParameters
-    }
-
-    func build() throws -> URLRequest {
+    func build<T: APIRequest>(apiRequest: T) throws -> URLRequest {
+        var urlComponents = apiRequest.urlComponents
         /// Add query parameters
-        urlComponents.queryItems = urlParameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
+        urlComponents.queryItems = apiRequest.parameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
 
         /// Make URL request
         guard let url = urlComponents.url else {
             throw APIError.canNotCastURLFromURLComponents
         }
-        var request = URLRequest(url: url)
+        var urlRequest = URLRequest(url: url)
         /// Set passed in HTTP method
-        request.httpMethod = method.rawValue
+        urlRequest.httpMethod = apiRequest.method.rawValue
         /// If an encodable body is passed in, encode to `httpBody`
-        if let body = body {
-            request.httpBody = body.data
+        if let body = apiRequest.body {
+            urlRequest.httpBody = body.data
         }
 
-        return request
+        return urlRequest
     }
 }

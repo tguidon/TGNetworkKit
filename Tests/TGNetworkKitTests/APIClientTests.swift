@@ -56,15 +56,6 @@ final class APIClientTests: XCTestCase {
 
     let request = URLRequest(url: URL(fileURLWithPath: "/foo"))
 
-    struct TestUser: Codable, Requestable {
-
-        static var host: String {
-            return "example.com"
-        }
-
-        let name: String
-    }
-
     enum TestError: Error {
         case testError
     }
@@ -72,25 +63,26 @@ final class APIClientTests: XCTestCase {
     func testAPIClientRequestGET() {
         let exp = expectation(description: "Request is made and model is returned.")
 
-        let response = TestUser(name: "Taylor")
+        let resource = MockResource(id: "1")
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
-        let data = try! encoder.encode(response)
+        let data = try! encoder.encode(resource)
 
         let session = URLSessionMock()
         session.response = validResponse
         session.data = data
 
+        let apiRequest = MockAPIRequest()
         let client = APIClient(session: session)
-        client.request(response: TestUser.self) { result in
+        client.request(apiRequest: apiRequest) { result in
             exp.fulfill()
 
-            var testUser: TestUser?
-            if case .success(let user) = result {
-                testUser = user
+            var resource: MockResource?
+            if case .success(let value) = result {
+                resource = value
             }
 
-            XCTAssertNotNil(testUser)
+            XCTAssertNotNil(resource)
         }
 
         wait(for: [exp], timeout: 3.0)
@@ -244,24 +236,24 @@ final class APIClientTests: XCTestCase {
     func testAPIClientParseDecodableSuccess() {
         let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")
 
-        let response = TestUser(name: "Taylor")
+        let resource = MockResource(id: "1")
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
-        let data = try! encoder.encode(response)
+        let data = try! encoder.encode(resource)
 
         let client = APIClient()
 
         let resultParam: Result<Data, APIError> = .success(data)
 
-        client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
+        client.parseDecodable(result: resultParam) { (result: Result<MockResource, APIError> ) in
             exp.fulfill()
-            var userToTest: TestUser?
-            if case .success(let user) = result {
-                userToTest = user
+            var resource: MockResource?
+            if case .success(let value) = result {
+                resource = value
             }
 
-            XCTAssertNotNil(userToTest, "Success result did not return data")
-            XCTAssertEqual(userToTest?.name, "Taylor")
+            XCTAssertNotNil(resource, "Success result did not return data")
+            XCTAssertEqual(resource?.id, "1")
         }
 
         wait(for: [exp], timeout: 3.0)
@@ -273,7 +265,7 @@ final class APIClientTests: XCTestCase {
         let client = APIClient()
         let resultParam: Result<Data, APIError> = .success("BadData".data(using: .utf8)!)
 
-        client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
+        client.parseDecodable(result: resultParam) { (result: Result<MockResource, APIError> ) in
             exp.fulfill()
             var errorToTest: APIError?
             if case .failure(let error) = result, case .decodingError = error {
@@ -292,7 +284,7 @@ final class APIClientTests: XCTestCase {
         let client = APIClient()
         let resultParam: Result<Data, APIError> = .failure(APIError.invalidResponse)
 
-        client.parseDecodable(result: resultParam) { (result: Result<TestUser, APIError> ) in
+        client.parseDecodable(result: resultParam) { (result: Result<MockResource, APIError> ) in
             exp.fulfill()
             var errorToTest: APIError?
             if case .failure(let error) = result, case .invalidResponse = error {
@@ -305,7 +297,7 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 3.0)
     }
 
-    static var parseTests = [
+    static var apiClientTests = [
         ("testAPIClientParseDecodableSuccess", testAPIClientParseDecodableSuccess),
         ("testAPIClientParseDecodableResultIsDecodableError", testAPIClientParseDecodableResultIsDecodableError),
         ("testAPIClientParseDecodableResultIsPassingError", testAPIClientParseDecodableResultIsPassingError)

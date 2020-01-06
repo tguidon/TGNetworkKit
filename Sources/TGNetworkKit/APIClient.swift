@@ -10,13 +10,13 @@ import Foundation
 /// API Client for making Requestable requests
 final public class APIClient {
 
-    // Data Response Result
+    /// Data Response Result
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
 
-    // Defaults to shared URLSession
+    /// Defaults to shared URLSession
     private let session: URLSession
 
-    // JSONDecoder for handling responses
+    /// JSONDecoder for handling responses
     private var jsonDecoder: JSONDecoder {
         let decoder = JSONDecoder()
         if useSnakeCaseDecoding {
@@ -25,8 +25,11 @@ final public class APIClient {
         return decoder
     }
 
-    // Set value to false to not convert from snake case
+    /// Set value to false to not convert from snake case
     public var useSnakeCaseDecoding: Bool = true
+
+    /// Build `urlRequest` from `APIRequest`
+    let builder = URLRequestBuilder()
 
     /**
      Initializes a new API client with a shared session by default
@@ -46,19 +49,10 @@ final public class APIClient {
         - method: HTTPMethod to use in quest, the default is a GET
         - completion: Handler resolves with Result<T: APIError>
      */
-    public func request<T: Requestable>(
-        response: T.Type,
-        method: HTTPMethod = .get,
-        body: Encodable? = nil,
-        urlParameters: Parameters? = nil,
-        completion: @escaping (Result<T, APIError>) -> Void
-    ) {
+    public func request<T: APIRequest>(apiRequest: T, completion: @escaping (Result<T.Resource, APIError>) -> Void) {
+        /// Create the `urlRequest` and on success, perform the request
         do {
-            let urlComponents = T.buildURLComponents()
-            /// Build URL Request
-            let builder = URLRequestBuilder(urlComponents: urlComponents, method: method, body: body, urlParameters: urlParameters)
-            let request = try builder.build()
-            /// Perform request
+            let request = try builder.build(apiRequest: apiRequest)
             perform(request: request) { result in
                 self.parseDecodable(result: result, completion: completion)
             }
@@ -67,7 +61,6 @@ final public class APIClient {
         } catch {
             completion(.failure(APIError.unhandled))
         }
-
     }
 
     /**
@@ -95,12 +88,7 @@ final public class APIClient {
          - completion: Handler resolves with Result<Data: APIError>
 
      */
-    private func handleDataTask(
-        _ data: Data?,
-        response: URLResponse?,
-        error: Error?,
-        completion: @escaping DataResultCompletion
-    ) {
+    private func handleDataTask(_ data: Data?, response: URLResponse?, error: Error?, completion: @escaping DataResultCompletion) {
         if let error = error  {
             completion(.failure(.networkingError(error)))
             return
