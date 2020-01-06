@@ -10,7 +10,7 @@ import Foundation
 public typealias Parameters = [String: String]
 public typealias Headers = [String: Any]
 
-public protocol APIRequest {
+public protocol APIRequest: HTTPS {
     associatedtype Resource: Decodable
 
     /// The scheme subcomponent of the URL
@@ -31,10 +31,6 @@ public protocol APIRequest {
 
 /// Default `APIRequest` properties
 extension APIRequest {
-
-    var scheme: String {
-        return "https"
-    }
 
     var path: String? {
         return nil
@@ -65,5 +61,15 @@ extension APIRequest {
         }
 
         return components
+    }
+}
+
+public protocol HTTPS {
+    var scheme: String { get }
+}
+
+extension HTTPS {
+    var scheme: String {
+        return "https"
     }
 }
