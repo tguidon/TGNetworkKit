@@ -10,7 +10,7 @@ import XCTest
 
 final class RequestableTests: XCTestCase {
 
-    func testRequestableMakeRequestWithPath() {
+    func testRequestableBuildURLComponentsWithPath() {
         struct Model: Requestable {
 
             static var host: String {
@@ -22,11 +22,11 @@ final class RequestableTests: XCTestCase {
             }
         }
 
-        let request = Model.buildURLComponents()
-        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path/to/data")
+        let urlComponents = Model.buildURLComponents()
+        XCTAssertEqual(urlComponents.url?.absoluteString, "https://example.com/path/to/data")
     }
 
-    func testRequestableMakeRequestWithNilPath() {
+    func testRequestableBuildURLComponentsWithNoPath() {
         struct Model: Requestable {
 
             static var host: String {
@@ -35,12 +35,12 @@ final class RequestableTests: XCTestCase {
         }
 
         XCTAssertNil(Model.path)
-        let request = Model.buildURLComponents()
-        XCTAssertEqual(request.url?.absoluteString, "https://example.com")
+        let urlComponents = Model.buildURLComponents()
+        XCTAssertEqual(urlComponents.url?.absoluteString, "https://example.com")
     }
 
     static var requestableTests = [
-        ("testRequestableMakeRequestWithPath", testRequestableMakeRequestWithPath),
-        ("testRequestableMakeRequestWithNilPath", testRequestableMakeRequestWithNilPath)
+        ("testRequestableBuildURLComponentsWithPath", testRequestableBuildURLComponentsWithPath),
+        ("testRequestableBuildURLComponentsWithNoPath", testRequestableBuildURLComponentsWithNoPath)
     ]
 }

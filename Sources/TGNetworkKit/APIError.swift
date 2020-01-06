@@ -35,4 +35,6 @@ public enum APIError: Error {
 
     /// Can not create URL from URLComponents
     case canNotCastURLFromURLComponents
+
+    case unhandled
 }

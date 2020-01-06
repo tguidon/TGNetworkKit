@@ -12,8 +12,6 @@ final public class APIClient {
 
     // Data Response Result
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
-    // URL parameteres
-    public typealias Parameters = [String: String]
 
     // Defaults to shared URLSession
     private let session: URLSession
@@ -55,28 +53,21 @@ final public class APIClient {
         urlParameters: Parameters? = nil,
         completion: @escaping (Result<T, APIError>) -> Void
     ) {
-        /// Build request
-        var urlComponents = T.buildURLComponents()
-        /// Add query parameters
-        urlComponents.queryItems = urlParameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
-
-        /// Make URL request
-        guard let url = urlComponents.url else {
-            completion(.failure(.canNotCastURLFromURLComponents))
-            return
-        }
-        var request = URLRequest(url: url)
-        /// Set passed in HTTP method
-        request.httpMethod = method.rawValue
-        /// If an encodable body is passed in, encode to `httpBody`
-        if let body = body {
-            request.httpBody = body.data
+        do {
+            let urlComponents = T.buildURLComponents()
+            /// Build URL Request
+            let builder = URLRequestBuilder(urlComponents: urlComponents, method: method, body: body, urlParameters: urlParameters)
+            let request = try builder.build()
+            /// Perform request
+            perform(request: request) { result in
+                self.parseDecodable(result: result, completion: completion)
+            }
+        } catch let error as APIError {
+            completion(.failure(error))
+        } catch {
+            completion(.failure(APIError.unhandled))
         }
 
-        /// Perform request
-        perform(request: request) { result in
-            self.parseDecodable(result: result, completion: completion)
-        }
     }
 
     /**
