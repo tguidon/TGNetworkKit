@@ -57,8 +57,9 @@ final class APIClientTests: XCTestCase {
     let request = URLRequest(url: URL(fileURLWithPath: "/foo"))
 
     struct TestUser: Codable, Requestable {
-        static var baseURL: URL {
-            return URL(fileURLWithPath: "/path")
+
+        static var host: String {
+            return "example.com"
         }
 
         let name: String
@@ -81,7 +82,7 @@ final class APIClientTests: XCTestCase {
         session.data = data
 
         let client = APIClient(session: session)
-        client.makeRequest(TestUser.self) { result in
+        client.request(response: TestUser.self) { result in
             exp.fulfill()
 
             var testUser: TestUser?

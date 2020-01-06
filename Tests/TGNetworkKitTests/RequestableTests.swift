@@ -13,8 +13,8 @@ final class RequestableTests: XCTestCase {
     func testRequestableMakeRequestWithPath() {
         struct Model: Requestable {
 
-            static var baseURL: URL {
-                return URL(string: "https://example.com")!
+            static var host: String {
+                return "example.com"
             }
 
             static var path: String? {
@@ -22,20 +22,20 @@ final class RequestableTests: XCTestCase {
             }
         }
 
-        let request = Model.makeRequest()
+        let request = Model.buildURLComponents()
         XCTAssertEqual(request.url?.absoluteString, "https://example.com/path/to/data")
     }
 
     func testRequestableMakeRequestWithNilPath() {
         struct Model: Requestable {
 
-            static var baseURL: URL {
-                return URL(string: "https://example.com")!
+            static var host: String {
+                return "example.com"
             }
         }
 
         XCTAssertNil(Model.path)
-        let request = Model.makeRequest()
+        let request = Model.buildURLComponents()
         XCTAssertEqual(request.url?.absoluteString, "https://example.com")
     }
 

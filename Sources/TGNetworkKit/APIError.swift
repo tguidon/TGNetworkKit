@@ -32,4 +32,7 @@ public enum APIError: Error {
 
     /// The client failed to parse the response
     case parseError(Error)
+
+    /// Can not create URL from URLComponents
+    case canNotCastURLFromURLComponents
 }

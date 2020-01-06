@@ -12,6 +12,8 @@ final public class APIClient {
 
     // Data Response Result
     typealias DataResultCompletion = (Result<Data, APIError>) -> Void
+    // URL parameteres
+    public typealias Parameters = [String: String]
 
     // Defaults to shared URLSession
     private let session: URLSession
@@ -46,18 +48,32 @@ final public class APIClient {
         - method: HTTPMethod to use in quest, the default is a GET
         - completion: Handler resolves with Result<T: APIError>
      */
-    public func makeRequest<T: Requestable>(
-        _ model: T.Type,
+    public func request<T: Requestable>(
+        response: T.Type,
         method: HTTPMethod = .get,
         body: Encodable? = nil,
+        urlParameters: Parameters? = nil,
         completion: @escaping (Result<T, APIError>) -> Void
     ) {
-        var request = T.makeRequest()
+        /// Build request
+        var urlComponents = T.buildURLComponents()
+        /// Add query parameters
+        urlComponents.queryItems = urlParameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
+
+        /// Make URL request
+        guard let url = urlComponents.url else {
+            completion(.failure(.canNotCastURLFromURLComponents))
+            return
+        }
+        var request = URLRequest(url: url)
+        /// Set passed in HTTP method
         request.httpMethod = method.rawValue
+        /// If an encodable body is passed in, encode to `httpBody`
         if let body = body {
             request.httpBody = body.data
-            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         }
+
+        /// Perform request
         perform(request: request) { result in
             self.parseDecodable(result: result, completion: completion)
         }
