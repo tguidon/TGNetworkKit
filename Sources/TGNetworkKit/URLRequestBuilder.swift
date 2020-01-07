@@ -25,6 +25,10 @@ struct URLRequestBuilder {
         if let body = apiRequest.body {
             urlRequest.httpBody = body.data
         }
+        /// Add optional header values to request
+        apiRequest.headers?.forEach { (key: String, value: String) in
+            urlRequest.addValue(value, forHTTPHeaderField: key)
+        }
 
         return urlRequest
     }

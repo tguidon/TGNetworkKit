@@ -8,7 +8,8 @@
 import Foundation
 
 public typealias Parameters = [String: String]
-public typealias Headers = [String: Any]
+public typealias Headers = [String: String]
+public typealias Body = Encodable
 
 public protocol APIRequest: HTTPS {
     associatedtype Resource: Decodable

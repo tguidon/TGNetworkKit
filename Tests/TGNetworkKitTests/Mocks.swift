@@ -29,13 +29,29 @@ struct MockDataBody: Encodable {
 struct MockAPIRequest: APIRequest {
     typealias Resource = MockResource
 
-    var host: String = "example.com"
-
+    var scheme: String
+    var host: String
+    var path: String?
     var method: HTTPMethod = .get
+    var parameters: Parameters?
+    var headers: Headers?
+    var body: Encodable?
 
-    var body: Encodable? {
-        return MockBody(id: "1", value: 100)
+    init(
+        scheme: String = "https",
+        host: String = "example.com",
+        path: String? = nil,
+        method: HTTPMethod = .get,
+        parameters: Parameters? = nil,
+        headers: Headers? = nil,
+        body: Encodable? = nil
+    ) {
+        self.scheme = scheme
+        self.host = host
+        self.path = path
+        self.method = method
+        self.parameters = parameters
+        self.headers = headers
+        self.body = body
     }
-
-    var parameters: Parameters? = ["foo": "bar", "baz": "bip"]
 }
