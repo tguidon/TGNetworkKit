@@ -55,3 +55,10 @@ struct MockAPIRequest: APIRequest {
         self.body = body
     }
 }
+
+struct MockRequestBuilder: RequestBuilder {
+
+    func build<T>(apiRequest: T) throws -> URLRequest where T: APIRequest {
+        throw APIError.canNotCastURLFromURLComponents
+    }
+}

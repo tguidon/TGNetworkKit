@@ -16,6 +16,12 @@ final class URLRequestBuilderTests: XCTestCase {
         XCTAssertNoThrow(try builder.build(apiRequest: apiRequest))
     }
 
+    func testURLRequestBuilderBuildThrows() {
+        let apiRequest = MockAPIRequest()
+        let builder = MockRequestBuilder()
+        XCTAssertThrowsError(try builder.build(apiRequest: apiRequest))
+    }
+
     func testURLRequestBuilderBuildAPIRequestRequiredProperties() {
         let apiRequest = MockAPIRequest(scheme: "https", host: "example.com", path: "/path", method: .get)
         let builder = URLRequestBuilder()
@@ -44,6 +50,7 @@ final class URLRequestBuilderTests: XCTestCase {
 
     static var urlRequestBuilderTests = [
         ("testURLRequestBuilderBuildNoThrow", testURLRequestBuilderBuildNoThrow),
+        ("testURLRequestBuilderBuildThrows", testURLRequestBuilderBuildThrows),
         ("testURLRequestBuilderBuildAPIRequestRequiredProperties", testURLRequestBuilderBuildAPIRequestRequiredProperties),
         ("testURLRequestBuilderBuildAPIRequestAllProperties", testURLRequestBuilderBuildAPIRequestAllProperties)
     ]

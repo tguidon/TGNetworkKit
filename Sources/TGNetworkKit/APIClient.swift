@@ -16,6 +16,9 @@ final public class APIClient {
     /// Defaults to shared URLSession
     private let session: URLSession
 
+    /// URLRequest builder for all requests
+    private let requestBuilder: RequestBuilder
+
     /// JSONDecoder for handling responses
     private var jsonDecoder: JSONDecoder {
         let decoder = JSONDecoder()
@@ -37,8 +40,9 @@ final public class APIClient {
      - Parameters:
         - session: URLSession to use in client
      */
-    init(session: URLSession = .shared) {
+    init(session: URLSession = .shared, requestBuilder: RequestBuilder = URLRequestBuilder()) {
         self.session = session
+        self.requestBuilder = requestBuilder
     }
 
     /**

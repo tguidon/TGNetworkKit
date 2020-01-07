@@ -7,9 +7,9 @@
 
 import Foundation
 
-struct URLRequestBuilder {
+struct URLRequestBuilder: RequestBuilder {
 
-    func build<T: APIRequest>(apiRequest: T) throws -> URLRequest {
+    func build<T>(apiRequest: T) throws -> URLRequest where T: APIRequest {
         var urlComponents = apiRequest.urlComponents
         /// Add query parameters
         urlComponents.queryItems = apiRequest.parameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
