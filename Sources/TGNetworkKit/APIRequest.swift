@@ -11,6 +11,11 @@ public typealias Parameters = [String: String]
 public typealias Headers = [String: String]
 public typealias Body = Encodable
 
+public struct APIResponse<T> where T: Decodable {
+    let value: T
+    let response: URLResponse
+}
+
 public protocol APIRequest: HTTPS {
     associatedtype Resource: Decodable
 

@@ -1,5 +1,6 @@
 import XCTest
 @testable import TGNetworkKit
+import Combine
 
 final class APIClientTests: XCTestCase {
 

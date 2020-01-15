@@ -32,8 +32,8 @@ final public class APIClient {
     /// Set value to false to not convert from snake case
     public var useSnakeCaseDecoding: Bool = true
 
-    /// Build `urlRequest` from `APIRequest`
-    let builder = URLRequestBuilder()
+    /// Number of retries api publisher returned
+    public var numberOfRetries: Int = 0
 
     /**
      Initializes a new API client with a shared session by default
@@ -57,7 +57,7 @@ final public class APIClient {
     public func request<T: APIRequest>(apiRequest: T, completion: @escaping (Result<T.Resource, APIError>) -> Void) {
         /// Create the `urlRequest` and on success, perform the request
         do {
-            let request = try builder.build(apiRequest: apiRequest)
+            let request = try requestBuilder.build(apiRequest: apiRequest)
             perform(request: request) { result in
                 self.parseDecodable(result: result, completion: completion)
             }
@@ -68,9 +68,33 @@ final public class APIClient {
         }
     }
 
+
 //    @available(iOS 13.0, *)
+//    @available(OSX 10.15, *)
 //    public func build<T: APIRequest>(apiRequest: T) -> AnyPublisher<T.Resource, APIError> {
 //
+//    }
+//
+//    @available(iOS 13.0, *)
+//    @available(OSX 10.15, *)
+//    public func buildRequestPublisher<T: APIRequest>(apiRequest: T) -> AnyPublisher<APIResponse<T.Resource>, Error> {
+//        do {
+//            // Create the url request from the given `APIRequest` protocol
+//            let request = try requestBuilder.build(apiRequest: apiRequest)
+//            // URLSession data task publisher, maps data as `APIResponse`
+//            return self.session
+//                .dataTaskPublisher(for: request)
+//                .retry(self.numberOfRetries)
+//                .tryMap { result -> APIResponse<T.Resource> in
+//                    let value = try self.jsonDecoder.decode(T.Resource.self, from: result.data)
+//                    return APIResponse(value: value, response: result.response)
+//                }
+//                .receive(on: DispatchQueue.main)
+//                .eraseToAnyPublisher()
+//        } catch let error {
+//            return Fail<APIResponse<T.Resource>, Error>(error: error)
+//                .eraseToAnyPublisher()
+//        }
 //    }
 
     /**
