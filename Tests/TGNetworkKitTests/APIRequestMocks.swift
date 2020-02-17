@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  APIRequestMocks.swift
 //  
 //
 //  Created by Taylor Guidon on 1/5/20.
@@ -8,8 +8,12 @@
 import XCTest
 @testable import TGNetworkKit
 
-struct MockResource: Codable {
+struct MockResource: Codable, Equatable {
     let id: String
+}
+
+enum MockError: Error {
+    case failed
 }
 
 struct MockBody: Encodable {
@@ -53,12 +57,5 @@ struct MockAPIRequest: APIRequest {
         self.parameters = parameters
         self.headers = headers
         self.body = body
-    }
-}
-
-struct MockRequestBuilder: RequestBuilder {
-
-    func build<T>(apiRequest: T) throws -> URLRequest where T: APIRequest {
-        throw APIError.canNotCastURLFromURLComponents
     }
 }

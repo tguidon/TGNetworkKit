@@ -6,12 +6,13 @@
 //
 
 import Foundation
+import Combine
 
 /// API Client for making Requestable requests
 final public class APIClient {
 
     /// Data Response Result
-    typealias DataResultCompletion = (Result<Data, APIError>) -> Void
+    typealias DataResultCompletion = (Result<Data?, APIError>) -> Void
 
     /// Defaults to shared URLSession
     private let session: URLSession
@@ -67,6 +68,11 @@ final public class APIClient {
         }
     }
 
+//    @available(iOS 13.0, *)
+//    public func build<T: APIRequest>(apiRequest: T) -> AnyPublisher<T.Resource, APIError> {
+//
+//    }
+
     /**
      Performs the URLRequest and handles the data task. Fires off the task.
 
@@ -92,29 +98,30 @@ final public class APIClient {
          - completion: Handler resolves with Result<Data: APIError>
 
      */
-    private func handleDataTask(_ data: Data?, response: URLResponse?, error: Error?, completion: @escaping DataResultCompletion) {
+    internal func handleDataTask(_ data: Data?, response: URLResponse?, error: Error?, completion: @escaping DataResultCompletion) {
         if let error = error  {
             completion(.failure(.networkingError(error)))
             return
         }
 
-        guard let http = response as? HTTPURLResponse, let data = data else {
+        guard let http = response as? HTTPURLResponse else {
             completion(.failure(.invalidResponse))
             return
         }
 
-        let body = String(data: data, encoding: .utf8) ?? "<no body>"
+        let errorData = data ?? "No error response".data(using: .utf8)!
+        let errorResponse = String(data: errorData, encoding: .utf8)
         switch http.statusCode {
         case 200...299:
             completion(.success(data))
         case 300...399:
-            completion(.failure(.redirectionError(http.statusCode, body)))
+            completion(.failure(.redirectionError(http.statusCode, errorResponse)))
         case 400...499:
-            completion(.failure(.requestError(http.statusCode, body)))
+            completion(.failure(.requestError(http.statusCode, errorResponse)))
         case 500...599:
-            completion(.failure(.serverError(http.statusCode, body)))
+            completion(.failure(.serverError(http.statusCode, errorResponse)))
         default:
-            completion(.failure(.unhandledHTTPStatus(http.statusCode, body)))
+            completion(.failure(.unhandledHTTPStatus(http.statusCode, errorResponse)))
         }
     }
 
@@ -125,19 +132,20 @@ final public class APIClient {
          - result: Result<Data, APIError>
          - completion: Handler resoleves with Result<T: APIError>
      */
-    internal func parseDecodable<T: Decodable>(result: Result<Data, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
+    internal func parseDecodable<T: Decodable>(result: Result<Data?, APIError>, completion: @escaping (Result<T, APIError>) -> Void) {
         switch result {
         case .success(let data):
             do {
+                guard let data = data else { throw APIError.dataIsNil }
                 let object = try jsonDecoder.decode(T.self, from: data)
                 DispatchQueue.main.async {
                     completion(.success(object))
                 }
-            } catch let decodingError as DecodingError {
+            } catch let error as DecodingError {
                 DispatchQueue.main.async {
-                    completion(.failure(.decodingError(decodingError)))
+                    completion(.failure(.decodingError(error)))
                 }
-            } catch let error {
+            } catch {
                 DispatchQueue.main.async {
                     completion(.failure(.parseError(error)))
                 }

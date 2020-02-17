@@ -13,16 +13,16 @@ public enum APIError: Error {
     case networkingError(Error)
 
     /// The data task returned an HTTP error in the 500 range
-    case serverError(Int, String)
+    case serverError(Int, String?)
 
     /// The data task returned an HTTP error in the 400 range
-    case requestError(Int, String) // HTTP 4xx
+    case requestError(Int, String?)
 
     /// The data task returned an HTTP error in the 300 range
-    case redirectionError(Int, String) // HTTP 3xx
+    case redirectionError(Int, String?)
 
     /// The data task returned an HTTP error we do not handle
-    case unhandledHTTPStatus(Int, String) // HTTP Unhandled
+    case unhandledHTTPStatus(Int, String?)
 
     /// The data task returned a response that is not an HTTPURLResponse
     case invalidResponse
@@ -35,6 +35,9 @@ public enum APIError: Error {
 
     /// Can not create URL from URLComponents
     case canNotCastURLFromURLComponents
+
+    /// The API returned nil data
+    case dataIsNil
 
     case unhandled
 }
