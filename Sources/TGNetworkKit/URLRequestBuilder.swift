@@ -23,7 +23,7 @@ struct URLRequestBuilder: RequestBuilder {
         urlRequest.httpMethod = apiRequest.method.rawValue
         /// If an encodable body is passed in, encode to `httpBody`
         if let body = apiRequest.body {
-            urlRequest.httpBody = body.data
+            urlRequest.httpBody = body.asData
         }
         /// Add optional header values to request
         apiRequest.headers?.forEach { (key: String, value: String) in

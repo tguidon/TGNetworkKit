@@ -9,7 +9,7 @@ import Foundation
 
 extension Encodable {
 
-    public var data: Data? {
+    public var asData: Data? {
         return try? JSONEncoder().encode(self)
     }
 }
