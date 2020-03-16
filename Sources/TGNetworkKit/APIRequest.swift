@@ -11,11 +11,6 @@ public typealias Parameters = [String: String]
 public typealias Headers = [String: String]
 public typealias Body = Encodable
 
-public struct APIResponse<T> where T: Decodable {
-    let value: T
-    let response: URLResponse
-}
-
 public protocol APIRequest: HTTPS {
     associatedtype Resource: Decodable
 
@@ -67,15 +62,5 @@ extension APIRequest {
         }
 
         return components
-    }
-}
-
-public protocol HTTPS {
-    var scheme: String { get }
-}
-
-extension HTTPS {
-    var scheme: String {
-        return "https"
     }
 }

@@ -10,26 +10,29 @@ import XCTest
 
 final class URLRequestBuilderTests: XCTestCase {
 
-    func testURLRequestBuilderBuildNoThrow() {
+    func testURLRequestBuilderBuildReturnsNotNil() {
         let apiRequest = MockAPIRequest()
         let builder = URLRequestBuilder()
-        XCTAssertNoThrow(try builder.build(apiRequest: apiRequest))
+        XCTAssertNotNil(builder.build(apiRequest: apiRequest))
     }
 
-    func testURLRequestBuilderBuildThrowsNilURL() {
+    func testURLRequestBuilderBuildReturnsNil() {
         let apiRequest = MockAPIRequest(host: "example.com", path: "auth/login")
         let builder = URLRequestBuilder()
-        XCTAssertThrowsError(try builder.build(apiRequest: apiRequest))
+        XCTAssertNil(builder.build(apiRequest: apiRequest))
     }
 
     func testURLRequestBuilderBuildAPIRequestRequiredProperties() {
         let apiRequest = MockAPIRequest(scheme: "https", host: "example.com", path: "/path", method: .get)
         let builder = URLRequestBuilder()
-        let request = try? builder.build(apiRequest: apiRequest)
+        guard let request = builder.build(apiRequest: apiRequest) else {
+            XCTFail("urlRequest is nil")
+            return
+        }
 
-        XCTAssertEqual(request?.url?.absoluteString, "https://example.com/path")
-        XCTAssertEqual(request?.httpMethod, "GET")
-        XCTAssertNil(request?.httpBody)
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path")
+        XCTAssertEqual(request.httpMethod, "GET")
+        XCTAssertNil(request.httpBody)
     }
 
     func testURLRequestBuilderBuildAPIRequestAllProperties() {
@@ -40,17 +43,20 @@ final class URLRequestBuilderTests: XCTestCase {
             scheme: "https", host: "example.com", path: "/path", method: .get, parameters: parameters, headers: headers, body: body
         )
         let builder = URLRequestBuilder()
-        let request = try? builder.build(apiRequest: apiRequest)
+        guard let request = builder.build(apiRequest: apiRequest) else {
+            XCTFail("urlRequest is nil")
+            return
+        }
 
-        XCTAssertEqual(request?.url?.absoluteString, "https://example.com/path?foo=bar")
-        XCTAssertEqual(request?.value(forHTTPHeaderField: "type"), "json")
-        XCTAssertEqual(request?.value(forHTTPHeaderField: "number"), "101")
-        XCTAssertNotNil(request?.httpBody)
+        XCTAssertEqual(request.url?.absoluteString, "https://example.com/path?foo=bar")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "type"), "json")
+        XCTAssertEqual(request.value(forHTTPHeaderField: "number"), "101")
+        XCTAssertNotNil(request.httpBody)
     }
 
     static var urlRequestBuilderTests = [
-        ("testURLRequestBuilderBuildNoThrow", testURLRequestBuilderBuildNoThrow),
-        ("testURLRequestBuilderBuildThrowsNilURL", testURLRequestBuilderBuildThrowsNilURL),
+        ("testURLRequestBuilderBuildReturnsNotNil", testURLRequestBuilderBuildReturnsNotNil),
+        ("testURLRequestBuilderBuildReturnsNil", testURLRequestBuilderBuildReturnsNil),
         ("testURLRequestBuilderBuildAPIRequestRequiredProperties", testURLRequestBuilderBuildAPIRequestRequiredProperties),
         ("testURLRequestBuilderBuildAPIRequestAllProperties", testURLRequestBuilderBuildAPIRequestAllProperties)
     ]

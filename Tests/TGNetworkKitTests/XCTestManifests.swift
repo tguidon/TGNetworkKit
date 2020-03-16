@@ -8,7 +8,11 @@ public func allTests() -> [XCTestCaseEntry] {
         testCase(APIClientTests.handleDataTaskTests),
         testCase(APIClientTests.parseDecodableTests),
 
+        testCAse(APIErrorTests.apiErrorTests),
+
         testCase(APIRequestTests.apiRequestTests),
+
+        testCase(ErrorExtensionTests.errorExtensionTests),
 
         testCase(URLRequestBuilderTests.urlRequestBuilderTests)
     ]

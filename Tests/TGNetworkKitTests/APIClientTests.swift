@@ -127,7 +127,7 @@ final class APIClientTests: XCTestCase {
 
     func testAPIClientHandleDataTaskError() {
         let client = APIClient()
-        let error = MockError.failed
+        let error = MockError.failed("Test must fail!")
         client.handleDataTask(nil, response: nil, error: error) { result in
             var errorToTest: Error?
             if case .failure(let error) = result, case .networkingError(let err) = error {

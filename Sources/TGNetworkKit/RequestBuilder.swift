@@ -8,5 +8,5 @@
 import Foundation
 
 protocol RequestBuilder {
-    func build<T>(apiRequest: T) throws -> URLRequest where T: APIRequest
+    func build<T>(apiRequest: T) -> URLRequest? where T: APIRequest
 }
