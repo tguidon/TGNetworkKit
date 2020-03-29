@@ -1,6 +1,6 @@
 # 📡 TGNetworkKit 
 
-A Swift package for requesting `Codable` responses. Conform your data type to the `APIRequest` protocol. Not all properties are required.
+A Swift package for requesting `Codable` responses. Conform your data type to the `APIRequest` protocol and fire away. Supports `Result` and `Combine` methods.
 
 ```swift
 public protocol APIRequest: HTTPS {
@@ -25,7 +25,11 @@ public protocol APIRequest: HTTPS {
 
 The `HTTPS` protocol defaults the scheme to `"https"`.
 
-Create an instance of the `APIClient` and fire away!
+## Result
+
+`(Result<T.Resource, APIError>) -> Void)`
+
+Example:
 
 ```swift
 class NetworkManager {
@@ -42,6 +46,31 @@ class NetworkManager {
             }
         }
     }
+}
+```
+
+
+
+## Combine
+
+`AnyPublisher<APIResponse<T.Resource>, APIError>`
+
+Example:
+
+```swift
+class NetworkManager {
+    let client = APIClient()
+    let apiRequest = MockAPIRequest()
+
+    let publisher = client.dataTaskPublisher(for: apiRequest)
+        .sink(receiveCompletion: { finish in
+            switch finish {
+            case .finished:
+            case .failure:
+            }
+        }, receiveValue: { apiResponse in
+            // handle APIResponse
+        })
 }
 ```
 
