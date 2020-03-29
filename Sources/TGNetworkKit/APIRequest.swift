@@ -64,13 +64,3 @@ extension APIRequest {
         return components
     }
 }
-
-public protocol HTTPS {
-    var scheme: String { get }
-}
-
-extension HTTPS {
-    var scheme: String {
-        return "https"
-    }
-}

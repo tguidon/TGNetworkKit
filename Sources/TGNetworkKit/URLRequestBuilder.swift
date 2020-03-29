@@ -9,14 +9,14 @@ import Foundation
 
 struct URLRequestBuilder: RequestBuilder {
 
-    func build<T>(apiRequest: T) throws -> URLRequest where T: APIRequest {
+    func build<T>(apiRequest: T) -> URLRequest? where T: APIRequest {
         var urlComponents = apiRequest.urlComponents
         /// Add query parameters
         urlComponents.queryItems = apiRequest.parameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
 
         /// Make URL request
         guard let url = urlComponents.url else {
-            throw APIError.canNotCastURLFromURLComponents
+            return nil
         }
         var urlRequest = URLRequest(url: url)
         /// Set passed in HTTP method

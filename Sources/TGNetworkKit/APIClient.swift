@@ -32,8 +32,8 @@ final public class APIClient {
     /// Set value to false to not convert from snake case
     public var useSnakeCaseDecoding: Bool = true
 
-    /// Build `urlRequest` from `APIRequest`
-    let builder = URLRequestBuilder()
+    /// Number of retries api publisher returned
+    public var numberOfRetries: Int = 0
 
     /**
      Initializes a new API client with a shared session by default
@@ -55,23 +55,66 @@ final public class APIClient {
         - completion: Handler resolves with Result<T: APIError>
      */
     public func request<T: APIRequest>(apiRequest: T, completion: @escaping (Result<T.Resource, APIError>) -> Void) {
-        /// Create the `urlRequest` and on success, perform the request
-        do {
-            let request = try builder.build(apiRequest: apiRequest)
-            perform(request: request) { result in
-                self.parseDecodable(result: result, completion: completion)
-            }
-        } catch let error as APIError {
-            completion(.failure(error))
-        } catch {
-            completion(.failure(APIError.unhandled))
+        guard let request = requestBuilder.build(apiRequest: apiRequest) else {
+            completion(.failure(APIError.failedToBuildURLRequestURL)); return
+        }
+
+        perform(request: request) { result in
+            self.parseDecodable(result: result, completion: completion)
         }
     }
 
-//    @available(iOS 13.0, *)
-//    public func build<T: APIRequest>(apiRequest: T) -> AnyPublisher<T.Resource, APIError> {
-//
-//    }
+
+    @available(iOS 13.0, *)
+    @available(OSX 10.15, *)
+    public func dataTaskPublisher<T: APIRequest>(for apiRequest: T) -> AnyPublisher<APIResponse<T.Resource>, APIError> {
+        guard let urlRequest = requestBuilder.build(apiRequest: apiRequest) else {
+            return Fail<APIResponse<T.Resource>, APIError>(error: APIError.failedToBuildURLRequestURL)
+                .eraseToAnyPublisher()
+        }
+
+        return self.session.dataTaskPublisher(for: urlRequest)
+            .retry(self.numberOfRetries)
+            .tryMap {
+                let (data, response) = try self.verifyHTTPUrlResponse(data: $0, response: $1)
+                return try self.buildAPIResponse(apiRequest: apiRequest, data: data, response: response)
+            }
+            .mapError { error -> APIError in
+                if let error = error as? DecodingError {
+                    return APIError.decodingError(error)
+                }
+                return error.asAPIError
+            }
+            .receive(on: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
+
+    @available(iOS 13.0, *)
+    @available(OSX 10.15, *)
+    internal func buildAPIResponse<T: APIRequest>(apiRequest: T, data: Data, response: HTTPURLResponse) throws -> APIResponse<T.Resource> {
+        let value = try self.jsonDecoder.decode(T.Resource.self, from: data)
+        return APIResponse(value: value, response: response)
+    }
+
+    internal func verifyHTTPUrlResponse(data: Data, response: URLResponse?) throws -> (Data, HTTPURLResponse) {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw APIError.invalidResponse
+        }
+
+        let errorResponse = String(data: data, encoding: .utf8)
+        switch httpResponse.statusCode {
+        case 300...399:
+            throw APIError.redirectionError(httpResponse.statusCode, errorResponse)
+        case 400...499:
+            throw APIError.requestError(httpResponse.statusCode, errorResponse)
+        case 500...599:
+            throw APIError.serverError(httpResponse.statusCode, errorResponse)
+        default:
+            break
+        }
+
+        return (data, httpResponse)
+    }
 
     /**
      Performs the URLRequest and handles the data task. Fires off the task.

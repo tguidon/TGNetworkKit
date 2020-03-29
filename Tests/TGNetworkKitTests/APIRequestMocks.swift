@@ -12,8 +12,22 @@ struct MockResource: Codable, Equatable {
     let id: String
 }
 
-enum MockError: Error {
-    case failed
+enum MockError: LocalizedError {
+    case failed(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .failed(let reason):
+            return "\(reason)"
+        }
+    }
+    
+    var localizedDescription: String {
+        switch self {
+        case .failed(let reason):
+            return "\(reason)"
+        }
+    }
 }
 
 struct MockBody: Encodable {
