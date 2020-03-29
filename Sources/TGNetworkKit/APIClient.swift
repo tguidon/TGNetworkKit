@@ -80,6 +80,9 @@ final public class APIClient {
                 return try self.buildAPIResponse(apiRequest: apiRequest, data: data, response: response)
             }
             .mapError { error -> APIError in
+                if let error = error as? DecodingError {
+                    return APIError.decodingError(error)
+                }
                 return error.asAPIError
             }
             .receive(on: DispatchQueue.main)
