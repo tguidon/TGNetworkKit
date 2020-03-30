@@ -32,8 +32,6 @@ final class APIClientTests: XCTestCase {
     let errorURL = URL(fileURLWithPath: "/TestError.testError")
     let apiErrorURL = URL(fileURLWithPath: "https://example.com/api-error")
 
-    static var session = URLSession()
-
     private func makeURLSession() -> URLSession {
         // Data URLs
         URLProtocolMock.dataURLs[dataURL] = "{\"key\":\"value\"}".data(using: .utf8)!
