@@ -413,12 +413,12 @@ final class APIClientTests: XCTestCase {
             .sink(receiveCompletion: { finish in
                 switch finish {
                 case .finished:
-                    exp.fulfill()
-                case .failure:
                     XCTFail()
+                case .failure:
+                    exp.fulfill()
                 }
             }, receiveValue: { apiResponse in
-                XCTAssertEqual(apiResponse.value.id, "101")
+                XCTFail("No value should be received")
             })
 
         XCTAssertNoThrow(publisher)
