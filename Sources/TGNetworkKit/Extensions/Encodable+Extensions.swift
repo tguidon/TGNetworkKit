@@ -10,6 +10,8 @@ import Foundation
 extension Encodable {
 
     public var asData: Data? {
-        return try? JSONEncoder().encode(self)
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        return try? encoder.encode(self)
     }
 }

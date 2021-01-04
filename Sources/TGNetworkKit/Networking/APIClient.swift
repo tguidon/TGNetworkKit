@@ -54,7 +54,7 @@ final public class APIClient {
         - method: HTTPMethod to use in quest, the default is a GET
         - completion: Handler resolves with Result<T: APIError>
      */
-    public func request<T: APIRequest>(apiRequest: T, completion: @escaping (Result<T.Resource, APIError>) -> Void) {
+    public func request<T: Decodable>(apiRequest: APIRequest, completion: @escaping (Result<T, APIError>) -> Void) {
         guard let request = requestBuilder.build(apiRequest: apiRequest) else {
             completion(.failure(APIError.failedToBuildURLRequestURL)); return
         }
@@ -67,9 +67,9 @@ final public class APIClient {
 
     @available(iOS 13.0, *)
     @available(OSX 10.15, *)
-    public func dataTaskPublisher<T: APIRequest>(for apiRequest: T) -> AnyPublisher<APIResponse<T.Resource>, APIError> {
+    public func dataTaskPublisher<T: Decodable>(for apiRequest: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
         guard let urlRequest = requestBuilder.build(apiRequest: apiRequest) else {
-            return Fail<APIResponse<T.Resource>, APIError>(error: APIError.failedToBuildURLRequestURL)
+            return Fail<APIResponse<T>, APIError>(error: APIError.failedToBuildURLRequestURL)
                 .eraseToAnyPublisher()
         }
 
@@ -91,8 +91,8 @@ final public class APIClient {
 
     @available(iOS 13.0, *)
     @available(OSX 10.15, *)
-    internal func buildAPIResponse<T: APIRequest>(apiRequest: T, data: Data, response: HTTPURLResponse) throws -> APIResponse<T.Resource> {
-        let value = try self.jsonDecoder.decode(T.Resource.self, from: data)
+    internal func buildAPIResponse<T: Decodable>(apiRequest: APIRequest, data: Data, response: HTTPURLResponse) throws -> APIResponse<T> {
+        let value = try self.jsonDecoder.decode(T.self, from: data)
         return APIResponse(value: value, response: response)
     }
 

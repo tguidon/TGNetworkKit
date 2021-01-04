@@ -11,19 +11,19 @@ import XCTest
 final class URLRequestBuilderTests: XCTestCase {
 
     func testURLRequestBuilderBuildReturnsNotNil() {
-        let apiRequest = MockAPIRequest()
+        let apiRequest = APIRequest.buildMock()
         let builder = URLRequestBuilder()
         XCTAssertNotNil(builder.build(apiRequest: apiRequest))
     }
 
     func testURLRequestBuilderBuildReturnsNil() {
-        let apiRequest = MockAPIRequest(host: "example.com", path: "auth/login")
+        let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
         let builder = URLRequestBuilder()
         XCTAssertNil(builder.build(apiRequest: apiRequest))
     }
 
     func testURLRequestBuilderBuildAPIRequestRequiredProperties() {
-        let apiRequest = MockAPIRequest(scheme: "https", host: "example.com", path: "/path", method: .get)
+        let apiRequest = APIRequest.buildMock(method: .get, scheme: "https", host: "example.com", path: "/path")
         let builder = URLRequestBuilder()
         guard let request = builder.build(apiRequest: apiRequest) else {
             XCTFail("urlRequest is nil")
@@ -36,11 +36,11 @@ final class URLRequestBuilderTests: XCTestCase {
     }
 
     func testURLRequestBuilderBuildAPIRequestAllProperties() {
-        let parameters: Parameters = ["foo": "bar"]
+        let parameters: Parameters = [URLQueryItem(name: "foo", value: "bar")]
         let headers: Headers = ["type": "json", "number": "101"]
-        let body: Body = MockBody(id: "1", value: 100)
-        let apiRequest = MockAPIRequest(
-            scheme: "https", host: "example.com", path: "/path", method: .get, parameters: parameters, headers: headers, body: body
+        let data = MockBody(id: "1", value: 100).asData
+        let apiRequest = APIRequest.buildMock(
+            method: .get, scheme: "https", host: "example.com", path: "/path", headers: headers, params: parameters, data: data
         )
         let builder = URLRequestBuilder()
         guard let request = builder.build(apiRequest: apiRequest) else {

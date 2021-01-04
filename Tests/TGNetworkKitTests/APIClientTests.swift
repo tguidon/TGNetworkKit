@@ -2,6 +2,7 @@ import XCTest
 @testable import TGNetworkKit
 import Combine
 
+@available(iOS 13.0, *)
 final class APIClientTests: XCTestCase {
 
     let validResponse = HTTPURLResponse(
@@ -32,6 +33,8 @@ final class APIClientTests: XCTestCase {
     let errorURL = URL(fileURLWithPath: "/TestError.testError")
     let apiErrorURL = URL(fileURLWithPath: "https://example.com/api-error")
 
+    private var cancellables = Set<AnyCancellable>()
+
     private func makeURLSession() -> URLSession {
         // Data URLs
         URLProtocolMock.dataURLs[dataURL] = "{\"key\":\"value\"}".data(using: .utf8)!
@@ -54,7 +57,7 @@ final class APIClientTests: XCTestCase {
         let exp = expectation(description: "Request is made and model is returned.")
 
         let client = APIClient(session: self.makeURLSession())
-        client.request(apiRequest: MockAPIRequest()) { result in
+        client.request(apiRequest: APIRequest.buildMock()) { (result: Result<MockResource, APIError>) in
             exp.fulfill()
 
             var resource: MockResource?
@@ -73,8 +76,8 @@ final class APIClientTests: XCTestCase {
         let exp = expectation(description: "Request is made and model is returned.")
 
         let client = APIClient(session: self.makeURLSession())
-        let apiRequest = MockAPIRequest(host: "example.com", path: "auth/login")
-        client.request(apiRequest: apiRequest) { result in
+        let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
+        client.request(apiRequest: apiRequest) { (result: Result<MockResource, APIError>) in
             exp.fulfill()
 
             var errorToTest: APIError?
@@ -310,7 +313,7 @@ final class APIClientTests: XCTestCase {
     ]
 
     func testAPIClientBuildAPIResponseNoThrow() {
-        let apiRequest = MockAPIRequest()
+        let apiRequest = APIRequest.buildMock()
 
         let resource = MockResource(id: "1")
         let encoder = JSONEncoder()
@@ -318,26 +321,23 @@ final class APIClientTests: XCTestCase {
         let data = try! encoder.encode(resource)
 
         let client = APIClient()
-        if #available(iOS 13.0, *) {
-            XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
+//        let function: APIResponse<MockResource> = client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!)
+//        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
 
-            let response = try? client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!)
-            XCTAssertEqual(response?.value.id, "1")
-        }
+        let response: APIResponse<MockResource> = try! client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!)
+        XCTAssertEqual(response.value.id, "1")
     }
 
     func testAPIClientBuildAPIResponseThrows() {
-        let apiRequest = MockAPIRequest()
+        let apiRequest = APIRequest.buildMock()
 
         let resource = MockResource(id: "1")
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         let data = try! encoder.encode(resource)
 
-        let client = APIClient()
-        if #available(iOS 13.0, *) {
-            XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
-        }
+//        let client = APIClient()
+//        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
     }
 
     func testAPIClientVerifyHTTPUrlInvalidHTTResponse() {
@@ -376,102 +376,94 @@ final class APIClientTests: XCTestCase {
     }
 
     func testAPIClientDataTaskPublisherFinishedSuccessfully() {
-        guard #available(iOS 13.0, *) else { return }
-
         let exp = XCTestExpectation(description: "Waiting for data task publisher to return successfully")
 
-        let apiRequest = MockAPIRequest()
+        let apiRequest = APIRequest.buildMock()
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher = client.dataTaskPublisher(for: apiRequest)
-            .sink(receiveCompletion: { finish in
-                switch finish {
-                case .finished:
-                    exp.fulfill()
-                case .failure:
-                    XCTFail()
-                }
-            }, receiveValue: { apiResponse in
-                XCTAssertEqual(apiResponse.value.id, "101")
-            })
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let cancellable = publisher.sink(receiveCompletion: { finish in
+            switch finish {
+            case .finished:
+                exp.fulfill()
+            case .failure:
+                XCTFail()
+            }
+        }, receiveValue: { apiResponse in
+            XCTAssertEqual(apiResponse.value.id, "101")
+        })
+        cancellable.store(in: &self.cancellables)
 
-        XCTAssertNoThrow(publisher)
         wait(for: [exp], timeout: 2.0)
     }
 
     func testAPIClientDataTaskPublisherFailureAPIError() {
-        guard #available(iOS 13.0, *) else { return }
-
         let exp = XCTestExpectation(description: "Waiting for data task publisher to return successfully")
 
-        let apiRequest = MockAPIRequest(path: "/api-error")
+        let apiRequest = APIRequest.buildMock(path: "/api-error")
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher = client.dataTaskPublisher(for: apiRequest)
-            .sink(receiveCompletion: { finish in
-                switch finish {
-                case .finished:
-                    XCTFail()
-                case .failure:
-                    exp.fulfill()
-                }
-            }, receiveValue: { apiResponse in
-                XCTFail("No value should be received")
-            })
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let cancellable = publisher.sink(receiveCompletion: { finish in
+            switch finish {
+            case .finished:
+                XCTFail()
+            case .failure:
+                exp.fulfill()
+            }
+        }, receiveValue: { apiResponse in
+            XCTFail("No value should be received")
+        })
+        cancellable.store(in: &self.cancellables)
 
-        XCTAssertNoThrow(publisher)
         wait(for: [exp], timeout: 2.0)
     }
 
     func testAPIClientDataTaskPublisherFailureDecoding() {
-        guard #available(iOS 13.0, *) else { return }
-
         let exp = XCTestExpectation(description: "Waiting for decoding failure")
 
-        let apiRequest = MockAPIRequest(path: "/bad-data")
+        let apiRequest = APIRequest.buildMock(path: "/bad-data")
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher = client.dataTaskPublisher(for: apiRequest)
-            .sink(receiveCompletion: { finish in
-                switch finish {
-                case .finished:
-                    XCTFail()
-                case .failure:
-                    exp.fulfill()
-                }
-            }, receiveValue: { apiResponse in
-                XCTFail("No value should be received")
-            })
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let cancellable = publisher.sink(receiveCompletion: { finish in
+            switch finish {
+            case .finished:
+                XCTFail()
+            case .failure:
+                exp.fulfill()
+            }
+        }, receiveValue: { apiResponse in
+            XCTFail("No value should be received")
+        })
+        cancellable.store(in: &self.cancellables)
 
-        XCTAssertNoThrow(publisher)
         wait(for: [exp], timeout: 2.0)
     }
 
     func testAPIClientDataTaskPublisherFailureBuildingURLRequest() {
-        guard #available(iOS 13.0, *) else { return }
-
         let exp = XCTestExpectation(description: "Waiting for decoding failure")
 
-        let apiRequest = MockAPIRequest(path: "bad-url-build")
+        let apiRequest = APIRequest.buildMock(path: "bad-url-build")
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher = client.dataTaskPublisher(for: apiRequest)
-            .sink(receiveCompletion: { finish in
-                switch finish {
-                case .finished:
-                    XCTFail()
-                case .failure:
-                    exp.fulfill()
-                }
-            }, receiveValue: { apiResponse in
-                XCTFail("No value should be received")
-            })
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let cancellable = publisher.sink(receiveCompletion: { finish in
+            switch finish {
+            case .finished:
+                XCTFail()
+            case .failure:
+                exp.fulfill()
+            }
+        }, receiveValue: { apiResponse in
+            XCTFail("No value should be received")
+        })
+        cancellable.store(in: &self.cancellables)
 
-        XCTAssertNoThrow(publisher)
         wait(for: [exp], timeout: 2.0)
     }
 

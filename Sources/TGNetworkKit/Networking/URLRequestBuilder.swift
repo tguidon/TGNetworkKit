@@ -9,22 +9,17 @@ import Foundation
 
 struct URLRequestBuilder: RequestBuilder {
 
-    func build<T>(apiRequest: T) -> URLRequest? where T: APIRequest {
+    func build(apiRequest: APIRequest) -> URLRequest? {
         var urlComponents = apiRequest.urlComponents
         /// Add query parameters
-        urlComponents.queryItems = apiRequest.parameters?.map{ URLQueryItem(name: $0.key, value: $0.value) }
+        urlComponents.queryItems = apiRequest.params
 
-        /// Make URL request
-        guard let url = urlComponents.url else {
-            return nil
-        }
+        guard let url = urlComponents.url else { return nil }
+
         var urlRequest = URLRequest(url: url)
-        /// Set passed in HTTP method
         urlRequest.httpMethod = apiRequest.method.rawValue
-        /// If an encodable body is passed in, encode to `httpBody`
-        if let body = apiRequest.body {
-            urlRequest.httpBody = body.asData
-        }
+        urlRequest.httpBody = apiRequest.data
+
         /// Add optional header values to request
         apiRequest.headers?.forEach { (key: String, value: String) in
             urlRequest.addValue(value, forHTTPHeaderField: key)

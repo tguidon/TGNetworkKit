@@ -11,119 +11,54 @@ import XCTest
 final class APIRequestTests: XCTestCase {
 
     func testAPIRequestProperties() {
-        struct Request: APIRequest {
-            typealias Resource = MockResource
+        let request = APIRequest(
+            method: .get,
+            scheme: "ftp",
+            host: "example.com",
+            path: "/path/to/data"
+        )
 
-            var scheme: String {
-                return "ftp"
-            }
-
-            var host: String {
-                return "example.com"
-            }
-
-            var path: String? {
-                return "/path/to/data"
-            }
-
-            var method: HTTPMethod {
-                return .get
-            }
-        }
-
-        let request = Request()
         XCTAssertEqual(request.scheme, "ftp")
         XCTAssertEqual(request.host, "example.com")
         XCTAssertEqual(request.path, "/path/to/data")
         XCTAssertEqual(request.method, HTTPMethod.get)
-        XCTAssertNil(request.parameters)
+        XCTAssertNil(request.params)
         XCTAssertNil(request.headers)
-        XCTAssertNil(request.body)
+        XCTAssertNil(request.data)
         let urlComponents = request.urlComponents
         XCTAssertEqual(urlComponents.url?.absoluteString, "ftp://example.com/path/to/data")
     }
 
     func testAPIRequestFullProperties() {
-        struct Request: APIRequest {
-            typealias Resource = MockResource
+        let request = APIRequest(
+            method: .get,
+            scheme: "ftp",
+            host: "example.com",
+            path: "/path/to/data",
+            headers: ["header": "value"],
+            params: [URLQueryItem(name: "q", value: "foo")],
+            data: MockBody(id: "1", value: 100).asData
+        )
 
-            var scheme: String {
-                return "ftp"
-            }
-
-            var host: String {
-                return "example.com"
-            }
-
-            var path: String? {
-                return "/path/to/data"
-            }
-
-            var method: HTTPMethod {
-                return .get
-            }
-
-            var parameters: Parameters? {
-                return ["q": "foo"]
-            }
-
-            var headers: Headers? {
-                return ["header": "value"]
-            }
-
-            var body: Encodable? {
-                return MockBody(id: "1", value: 100)
-            }
-        }
-
-        let request = Request()
         XCTAssertEqual(request.scheme, "ftp")
         XCTAssertEqual(request.host, "example.com")
         XCTAssertEqual(request.path, "/path/to/data")
         XCTAssertEqual(request.method, HTTPMethod.get)
-        XCTAssertNotNil(request.parameters)
+        XCTAssertNotNil(request.params)
         XCTAssertNotNil(request.headers)
-        XCTAssertNotNil(request.body)
+        XCTAssertNotNil(request.data)
         let urlComponents = request.urlComponents
         XCTAssertEqual(urlComponents.url?.absoluteString, "ftp://example.com/path/to/data")
     }
 
     func testAPIRequestURLComponentsWithPath() {
-        struct Request: APIRequest {
-            typealias Resource = MockResource
-
-            var host: String {
-                return "example.com"
-            }
-
-            var path: String? {
-                  return "/path/to/data"
-            }
-
-            var method: HTTPMethod {
-                return .get
-            }
-        }
-
-        let request = Request()
+        let request = APIRequest(method: .get, host: "example.com", path: "/path/to/data")
         let urlComponents = request.urlComponents
         XCTAssertEqual(urlComponents.url?.absoluteString, "https://example.com/path/to/data")
     }
 
     func testAPIRequestURLComponentsWithNoPath() {
-        struct Request: APIRequest {
-            typealias Resource = MockResource
-
-            var host: String {
-                return "example.com"
-            }
-
-            var method: HTTPMethod {
-                return .get
-            }
-        }
-
-        let request = Request()
+        let request = APIRequest(method: .get, host: "example.com")
         let urlComponents = request.urlComponents
         XCTAssertEqual(urlComponents.url?.absoluteString, "https://example.com")
     }

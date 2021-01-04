@@ -50,13 +50,6 @@
             BlueprintName = "TGNetworkKit"
             ReferencedContainer = "container:">
          </BuildableReference>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "TGNetworkKitTests"
-            BuildableName = "TGNetworkKitTests"
-            BlueprintName = "TGNetworkKitTests"
-            ReferencedContainer = "container:">
-         </BuildableReference>
       </CodeCoverageTargets>
       <Testables>
          <TestableReference

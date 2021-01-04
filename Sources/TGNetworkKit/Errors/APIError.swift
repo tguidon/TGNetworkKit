@@ -32,6 +32,34 @@ public enum APIError: Error {
     case dataIsNil
     /// Unhandled error with a String reason
     case unhandled(String)
+
+    /// Init with `Swift.Error` type.
+    ///
+    /// If the error is a `DecodingError` type, init as our `.decodingError` case
+    /// Else attemp to cast as `CKError` and fallback to `.unhandled`
+    init(_ error: Swift.Error) {
+        switch error {
+        case is DecodingError:
+            self = .decodingError(error as! DecodingError)
+        default:
+            self = error as? APIError ?? .unhandled(error.localizedDescription)
+        }
+    }
+}
+
+public extension APIError {
+    /// Return an optional status code for errors containing a code property
+    var httpStatusCode: Int? {
+        switch self {
+        case .serverError(let code , _),
+             .requestError(let code , _),
+             .redirectionError(let code , _),
+             .unhandledHTTPStatus(let code , _):
+            return code
+        default:
+            return nil
+        }
+    }
 }
 
 extension APIError: Equatable {

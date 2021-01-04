@@ -44,32 +44,25 @@ struct MockDataBody: Encodable {
     let value: Int
 }
 
-struct MockAPIRequest: APIRequest {
-    typealias Resource = MockResource
+extension APIRequest {
 
-    var scheme: String
-    var host: String
-    var path: String?
-    var method: HTTPMethod = .get
-    var parameters: Parameters?
-    var headers: Headers?
-    var body: Encodable?
-
-    init(
+    static func buildMock(
+        method: HTTPMethod = .get,
         scheme: String = "https",
         host: String = "example.com",
         path: String? = nil,
-        method: HTTPMethod = .get,
-        parameters: Parameters? = nil,
         headers: Headers? = nil,
-        body: Encodable? = nil
-    ) {
-        self.scheme = scheme
-        self.host = host
-        self.path = path
-        self.method = method
-        self.parameters = parameters
-        self.headers = headers
-        self.body = body
+        params: Parameters? = nil,
+        data: Data? = nil
+    ) -> APIRequest {
+        return APIRequest(
+            method: method,
+            scheme: scheme,
+            host: host,
+            path: path,
+            headers: headers,
+            params: params,
+            data: data
+        )
     }
 }
