@@ -51,13 +51,13 @@ final class APIClientTests: XCTestCase {
         return URLSession(configuration: config)
     }
 
-    // MARK: - `request()` tests
+    // MARK: - `execute()` tests
 
     func testAPIClientRequestGetMockResource() {
         let exp = expectation(description: "Request is made and model is returned.")
 
         let client = APIClient(session: self.makeURLSession())
-        client.request(apiRequest: APIRequest.buildMock()) { (result: Result<MockResource, APIError>) in
+        client.execute(request: APIRequest.buildMock()) { (result: Result<MockResource, APIError>) in
             exp.fulfill()
 
             var resource: MockResource?
@@ -77,7 +77,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
         let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
-        client.request(apiRequest: apiRequest) { (result: Result<MockResource, APIError>) in
+        client.execute(request: apiRequest) { (result: Result<MockResource, APIError>) in
             exp.fulfill()
 
             var errorToTest: APIError?
@@ -382,7 +382,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -405,7 +405,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -428,7 +428,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -451,7 +451,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.dataTaskPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:

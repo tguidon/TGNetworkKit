@@ -8,14 +8,20 @@
 import Foundation
 import Combine
 
-/// Our API client required properties and method
 @available(iOS 13.0, *)
+/// <#Description#>
 protocol NetworkingProtocol {
     var session: URLSession { get }
     var requestBuilder: RequestBuilder { get }
     var requestAdapters: [RequestAdapter] { get }
     var jsonDecoder: JSONDecoder { get }
 
+    /// <#Description#>
+    /// - Parameters:
+    ///   - request: <#request description#>
+    ///   - completion: <#completion description#>
     func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<T, APIError>) -> Void)
-    func buildPublisher<T: Decodable>(request: APIRequest) -> AnyPublisher<T, APIError>
+    /// <#Description#>
+    /// - Parameter request: <#request description#>
+    func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError>
 }

@@ -11,6 +11,6 @@ import Foundation
 ///
 /// - Parameters:
 ///     - request: `URLComponents` are constructed from `Request` object
-protocol RequestBuilder {
+public protocol RequestBuilder {
     func build(apiRequest: APIRequest) -> URLRequest?
 }

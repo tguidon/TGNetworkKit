@@ -9,28 +9,21 @@ import Foundation
 import Combine
 
 /// API Client for making Requestable requests
-final public class APIClient {
+final public class APIClient: NetworkingProtocol {
 
     /// Data Response Result
     typealias DataResultCompletion = (Result<Data?, APIError>) -> Void
 
     /// Defaults to shared URLSession
-    private let session: URLSession
+    public let session: URLSession
 
     /// URLRequest builder for all requests
-    private let requestBuilder: RequestBuilder
+    public let requestBuilder: RequestBuilder
+
+    public let requestAdapters: [RequestAdapter]
 
     /// JSONDecoder for handling responses
-    private var jsonDecoder: JSONDecoder {
-        let decoder = JSONDecoder()
-        if useSnakeCaseDecoding {
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-        }
-        return decoder
-    }
-
-    /// Set value to false to not convert from snake case
-    public var useSnakeCaseDecoding: Bool = true
+    internal let jsonDecoder: JSONDecoder
 
     /// Number of retries api publisher returned
     public var numberOfRetries: Int = 0
@@ -41,9 +34,16 @@ final public class APIClient {
      - Parameters:
         - session: URLSession to use in client
      */
-    init(session: URLSession = .shared, requestBuilder: RequestBuilder = URLRequestBuilder()) {
+    init(
+        session: URLSession = .shared,
+        requestBuilder: RequestBuilder = URLRequestBuilder(),
+        requestAdapters: [RequestAdapter] = [],
+        jsonDecoder: JSONDecoder = JSONDecoder()
+    ) {
         self.session = session
         self.requestBuilder = requestBuilder
+        self.requestAdapters = requestAdapters
+        self.jsonDecoder = jsonDecoder
     }
 
     /**
@@ -54,8 +54,8 @@ final public class APIClient {
         - method: HTTPMethod to use in quest, the default is a GET
         - completion: Handler resolves with Result<T: APIError>
      */
-    public func request<T: Decodable>(apiRequest: APIRequest, completion: @escaping (Result<T, APIError>) -> Void) {
-        guard let request = requestBuilder.build(apiRequest: apiRequest) else {
+    public func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<T, APIError>) -> Void) {
+        guard let request = requestBuilder.build(apiRequest: request) else {
             completion(.failure(APIError.failedToBuildURLRequestURL)); return
         }
 
@@ -64,11 +64,10 @@ final public class APIClient {
         }
     }
 
-
     @available(iOS 13.0, *)
     @available(OSX 10.15, *)
-    public func dataTaskPublisher<T: Decodable>(for apiRequest: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
-        guard let urlRequest = requestBuilder.build(apiRequest: apiRequest) else {
+    public func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
+        guard let urlRequest = requestBuilder.build(apiRequest: request) else {
             return Fail<APIResponse<T>, APIError>(error: APIError.failedToBuildURLRequestURL)
                 .eraseToAnyPublisher()
         }
@@ -77,7 +76,7 @@ final public class APIClient {
             .retry(self.numberOfRetries)
             .tryMap {
                 let (data, response) = try self.verifyHTTPUrlResponse(data: $0, response: $1)
-                return try self.buildAPIResponse(apiRequest: apiRequest, data: data, response: response)
+                return try self.buildAPIResponse(apiRequest: request, data: data, response: response)
             }
             .mapError { error -> APIError in
                 if let error = error as? DecodingError {
