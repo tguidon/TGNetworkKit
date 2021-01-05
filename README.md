@@ -1,48 +1,57 @@
 # 📡 TGNetworkKit 
 
-A Swift package for requesting `Codable` responses. Conform your data type to the `APIRequest` protocol and fire away. Supports `Result` and `Combine` methods.
+A Swift package for requesting `Codable` responses. Create an instance of `APIRequest`  and fire away. Supports `Result` and `Combine` methods.
 
 ```swift
-public protocol APIRequest: HTTPS {
-    associatedtype Resource: Decodable
+public struct APIRequest {
+    public let method: HTTPMethod
+    public let scheme: String
+    public let host: String
+    public let path: String?
+    public let headers: Headers?
+    public let params: Parameters?
+    public let data: Data?
 
-    /// The scheme subcomponent of the URL
-    var scheme: String { get }
-    /// The host subcomponent
-    var host: String { get }
-    /// The path subcomponent
-    var path: String? { get }
-    /// The HTTP request method
-    var method: HTTPMethod { get }
-    /// The URL parameters of the request
-    var parameters: Parameters? { get }
-    /// The request header values
-    var headers: Headers? { get }
-    /// The data sent as the message body of a request
-    var body: Encodable? { get }
+    public init(
+        method: HTTPMethod,
+        scheme: String = "https",
+        host: String,
+        path: String? = nil,
+        headers: Headers? = nil,
+        params: Parameters? = nil,
+        data: Data? = nil
+    ) {
+        self.method = method
+        self.scheme = scheme
+        self.host = host
+        self.path = path
+        self.headers = headers
+        self.params = params
+        self.data = data
+    }
 }
 ```
 
-The `HTTPS` protocol defaults the scheme to `"https"`.
+
 
 ## Result
 
-`(Result<T.Resource, APIError>) -> Void)`
+`(Result<APIResponse<T>, APIError>) -> Void)`
 
 Example:
 
 ```swift
 class NetworkManager {
     let client = APIClient()
-    let apiRequest = MockAPIRequest()
+    let apiRequest = APIRequest(...)
 
     func getData() {
-        client.request(apiRequest: apiRequest) { result in
+        client.execute(request: apiRequest) { result in
             switch result {
-            case .success(let resource):
-                print(resource.id)
+            case .success(let response):
+                // handle success
             case .failure(let error)
-                print(error.localizedDescription)
+                // handle error
             }
         }
     }
@@ -53,20 +62,23 @@ class NetworkManager {
 
 ## Combine
 
-`AnyPublisher<APIResponse<T.Resource>, APIError>`
+`AnyPublisher<APIResponse<T>, APIError>`
 
 Example:
 
 ```swift
 class NetworkManager {
     let client = APIClient()
-    let apiRequest = MockAPIRequest()
+    let apiRequest = APIRequest(...)
 
-    let publisher = client.dataTaskPublisher(for: apiRequest)
+  	typealias TestPublisher = AnyPublisher<APIResponse<Resource>, APIError>
+    let publisher: TestPublisher = client.dataTaskPublisher(for: apiRequest)
         .sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
+              // handle finish
             case .failure:
+              // handle failure
             }
         }, receiveValue: { apiResponse in
             // handle APIResponse

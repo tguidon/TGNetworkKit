@@ -328,7 +328,8 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
+        typealias TestPublisher = AnyPublisher<APIResponse<MockResource>, APIError>
+        let publisher: TestPublisher = client.buildPublisher(for: apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
