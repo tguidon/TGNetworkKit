@@ -40,9 +40,9 @@ extension APIClient {
 
     // MARK: - Combine
 
-    /// <#Description#>
-    /// - Parameter request: <#request description#>
-    /// - Returns: <#description#>
+    /// Builds a new Publisher for making Decodable requests
+    /// - Parameter request: Instance of an `APIRequest` with information on what request to make
+    /// - Returns: Returns `AnyPublisher<APIResponse<T>, APIError>`
     @available(iOS 13.0, *)
     @available(OSX 10.15, *)
     public func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
@@ -64,14 +64,10 @@ extension APIClient {
 
     // MARK: - Result
 
-    /**
-     Makes requests that confirm to the Requestable protocol
-
-     - Parameters:
-        - model: The concrete Requestable type
-        - method: HTTPMethod to use in quest, the default is a GET
-        - completion: Handler resolves with Result<T: APIError>
-     */
+    /// Makes requests for APIRequest instances
+    /// - Parameters:
+    ///   - request: Instance of an `APIRequest` with information on what request to make
+    ///   - completion: Handler resolves with Result<APIResponse<T>: APIError>
     public func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<APIResponse<T>, APIError>) -> Void) {
         guard var urlRequest = requestBuilder.build(apiRequest: request) else {
             completion(.failure(APIError.failedToBuildURLRequestURL)); return
@@ -94,13 +90,10 @@ extension APIClient {
         }
     }
 
-    /**
-     Performs the URLRequest and handles the data task. Fires off the task.
-
-     - Parameters:
-         - request: URLRequest passed in from makeRequest method
-         - completion: Handler resolves with Result<Data: APIError>
-     */
+    /// Performs the URLRequest and handles the data task. Fires off the task.
+    /// - Parameters:
+    ///   - request: `URLRequest` passed in from `execute()` method
+    ///   - completion: <#completion description#>
     internal func performDataTask(request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
         let task = session.dataTask(with: request) { (data, urlResponse, error) in
             completion(data, urlResponse, error)
@@ -111,6 +104,7 @@ extension APIClient {
     // MARK:- Shared Logic
 
     /// Adapts the given `URLRequest` via the given Apaptor array on client init.
+    /// - Parameter urlRequest: `URLRequest` to modify, must be a var.
     internal func adapt(_ urlRequest: inout URLRequest) {
         self.requestAdapters.forEach { $0.adapt(&urlRequest) }
     }
@@ -121,6 +115,8 @@ extension APIClient {
     /// - Parameters:
     ///     - data: `Data` returned from `dataTaskPublisher`
     ///     - response: `URLResponse` returned from `dataTaskPublisher`
+    /// - Throws: `APIError` if the response is not of type `HTTPURLResponse` or a valid HTTP Status Code
+    /// - Returns: `(Data, HTTPURLResponse)` tuple
     internal func validateResponse(data: Data?, response: URLResponse?) throws -> (Data, HTTPURLResponse) {
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
