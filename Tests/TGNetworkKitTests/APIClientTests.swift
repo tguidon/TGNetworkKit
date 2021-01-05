@@ -140,110 +140,7 @@ final class APIClientTests: XCTestCase {
         ("testAPIClientAdaptURLRequest", testAPIClientAdaptURLRequest),
     ]
 
-    // MARK: - `handleDataTask()` tests
-
-    func testAPIClientHandleDataTaskData() {
-//        let client = APIClient()
-//        let data = "".data(using: .utf8)!
-//        client.handleDataTask(data, response: validResponse, error: nil) { result in
-//            var dataToTest: Data?
-//            if case .success(let data) = result {
-//                dataToTest = data
-//            }
-//
-//            XCTAssertNotNil(dataToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskError() {
-//        let client = APIClient()
-//        let error = MockError.failed("Test must fail!")
-//        client.handleDataTask(nil, response: nil, error: error) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .networkingError(let err) = error {
-//                XCTAssertTrue(err is MockError)
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskInvalidHTTResponse() {
-//        let client = APIClient()
-//        let data = "Data".data(using: .utf8)
-//        let response = URLResponse()
-//        client.handleDataTask(data, response: response, error: nil) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .invalidResponse = error {
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskRedirectionError() {
-//        let client = APIClient()
-//        client.handleDataTask(nil, response: redirectionErrorResponse, error: nil) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .redirectionError(let code, _) = error {
-//                XCTAssertEqual(code, 300)
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskRequestError() {
-//        let client = APIClient()
-//        client.handleDataTask(nil, response: requestErrorResponse, error: nil) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .requestError(let code, _) = error {
-//                XCTAssertEqual(code, 400)
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskServerError() {
-//        let client = APIClient()
-//        client.handleDataTask(nil, response: serverErrorResponse, error: nil) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .serverError(let code, _) = error {
-//                XCTAssertEqual(code, 500)
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    func testAPIClientHandleDataTaskUnhandledHTTPStatusError() {
-//        let client = APIClient()
-//        client.handleDataTask(nil, response: unhandledErrorResponse, error: nil) { result in
-//            var errorToTest: Error?
-//            if case .failure(let error) = result, case .unhandledHTTPStatus(let code, _) = error {
-//                XCTAssertEqual(code, 900)
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//        }
-    }
-
-    static var handleDataTaskTests = [
-        ("testAPIClientHandleDataTaskData", testAPIClientHandleDataTaskData),
-        ("testAPIClientHandleDataTaskError", testAPIClientHandleDataTaskError),
-        ("testAPIClientHandleDataTaskInvalidHTTResponse", testAPIClientHandleDataTaskInvalidHTTResponse),
-        ("testAPIClientHandleDataTaskRedirectionError", testAPIClientHandleDataTaskRedirectionError),
-        ("testAPIClientHandleDataTaskRequestError", testAPIClientHandleDataTaskRequestError),
-        ("testAPIClientHandleDataTaskServerError", testAPIClientHandleDataTaskServerError),
-        ("testAPIClientHandleDataTaskUnhandledHTTPStatusError", testAPIClientHandleDataTaskUnhandledHTTPStatusError)
-    ]
+    // MARK: - Validation and Response Tests
 
     func testAPIClientBuildAPIResponseNoThrow() {
         let apiRequest = APIRequest.buildMock()
@@ -272,8 +169,6 @@ final class APIClientTests: XCTestCase {
 //        let client = APIClient()
 //        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
     }
-
-    // MARK: - Validation and Response
 
     func testAPIClientVerifyHTTPUrlInvalidHTTResponse() {
         let data = "Data".data(using: .utf8)!
