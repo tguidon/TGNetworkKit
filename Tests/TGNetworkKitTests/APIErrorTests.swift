@@ -23,9 +23,9 @@ final class APIErrorTests: XCTestCase {
     }
 
     func testAPIErrorServerErrorEquality() {
-        let error1 = APIError.serverError(500, "server fail")
-        let error2 = APIError.serverError(500, "server gone")
-        let error3 = APIError.serverError(501, "server fail")
+        let error1 = APIError.serverError(500, "server fail".data(using: .utf8))
+        let error2 = APIError.serverError(500, "server gone".data(using: .utf8))
+        let error3 = APIError.serverError(501, "server fail".data(using: .utf8))
 
 
         XCTAssertEqual(error1, error1)
@@ -34,9 +34,9 @@ final class APIErrorTests: XCTestCase {
     }
 
     func testAPIErrorRequestErrorEquality() {
-        let error1 = APIError.requestError(400, "request unauthorized")
-        let error2 = APIError.requestError(400, "forbidden")
-        let error3 = APIError.requestError(404, "request unauthorized")
+        let error1 = APIError.requestError(400, "request unauthorized".data(using: .utf8))
+        let error2 = APIError.requestError(400, "forbidden".data(using: .utf8))
+        let error3 = APIError.requestError(404, "request unauthorized".data(using: .utf8))
 
         XCTAssertEqual(error1, error1)
         XCTAssertNotEqual(error1, error2)
@@ -44,9 +44,9 @@ final class APIErrorTests: XCTestCase {
     }
 
     func testAPIErrorRedirectionErrorEquality() {
-        let error1 = APIError.redirectionError(300, "redirect error")
-        let error2 = APIError.redirectionError(300, "can not find redirect")
-        let error3 = APIError.redirectionError(301, "redirect error")
+        let error1 = APIError.redirectionError(300, "redirect error".data(using: .utf8))
+        let error2 = APIError.redirectionError(300, "can not find redirect".data(using: .utf8))
+        let error3 = APIError.redirectionError(301, "redirect error".data(using: .utf8))
 
         XCTAssertEqual(error1, error1)
         XCTAssertNotEqual(error1, error2)
@@ -54,9 +54,9 @@ final class APIErrorTests: XCTestCase {
     }
 
     func testAPIErrorUnhandledHTTPStatuEquality() {
-        let error1 = APIError.unhandledHTTPStatus(900, "whoa, this error")
-        let error2 = APIError.unhandledHTTPStatus(900, "to infinity and...")
-        let error3 = APIError.unhandledHTTPStatus(999, "whoa, this error")
+        let error1 = APIError.unhandledHTTPStatus(900, "whoa, this error".data(using: .utf8))
+        let error2 = APIError.unhandledHTTPStatus(900, "to infinity and...".data(using: .utf8))
+        let error3 = APIError.unhandledHTTPStatus(999, "whoa, this error".data(using: .utf8))
 
         XCTAssertEqual(error1, error1)
         XCTAssertNotEqual(error1, error2)

@@ -20,7 +20,7 @@ protocol NetworkingProtocol {
     /// - Parameters:
     ///   - request: <#request description#>
     ///   - completion: <#completion description#>
-    func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<T, APIError>) -> Void)
+    func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<APIResponse<T>, APIError>) -> Void)
     /// <#Description#>
     /// - Parameter request: <#request description#>
     func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError>

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct APIResponse<T> where T: Decodable {
+public struct APIResponse<T: Decodable> {
     let value: T
     let response: URLResponse
 }
