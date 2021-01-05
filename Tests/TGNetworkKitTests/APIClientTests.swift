@@ -143,76 +143,64 @@ final class APIClientTests: XCTestCase {
 
     // MARK: - Validation and Response Tests
 
-    func testAPIClientBuildAPIResponseNoThrow() {
-        let apiRequest = APIRequest.buildMock()
-
+    func testAPIClientValidateResponseNoThrow() {
         let resource = MockResource(id: "1")
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
         let data = try! encoder.encode(resource)
 
         let client = APIClient()
-//        let function: APIResponse<MockResource> = client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!)
-//        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
-
-        let response: APIResponse<MockResource> = try! client.buildResponse(forData: data, httpURLResponse: self.validResponse!)
-        XCTAssertEqual(response.value.id, "1")
+        XCTAssertNoThrow(try client.validateResponse(data: data, response: self.validResponse))
     }
 
-    func testAPIClientBuildAPIResponseThrows() {
-        let apiRequest = APIRequest.buildMock()
-
-        let resource = MockResource(id: "1")
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
-        let data = try! encoder.encode(resource)
-
-//        let client = APIClient()
-//        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
+    func testAPIClientValidateResponseNoThrowNoContent() {
+        let client = APIClient()
+        XCTAssertNoThrow(try client.validateResponse(data: nil, response: self.validResponse))
     }
 
-    func testAPIClientVerifyHTTPUrlInvalidHTTResponse() {
+    func testAPIClientValidateResponseInvalidHTTResponse() {
         let data = "Data".data(using: .utf8)!
 
         let client = APIClient()
-//        XCTAssertThrowsError(try client.verifyHTTPUrlResponse(data: data, response: URLResponse()))
+        XCTAssertThrowsError(try client.validateResponse(data: data, response: URLResponse()))
     }
 
-    func testAPIClientVerifyHTTPUrlResponseRedirectionError() {
+    func testAPIClientValidateResponseRedirectionError() {
         let data = "Data".data(using: .utf8)!
 
         let client = APIClient()
-//        XCTAssertThrowsError(try client.verifyHTTPUrlResponse(data: data, response: self.redirectionErrorResponse))
+        XCTAssertThrowsError(try client.validateResponse(data: data, response: self.redirectionErrorResponse))
     }
 
-    func testAPIClientVerifyHTTPUrlResponseRequestError() {
+    func testAPIClientValidateResponseRequestError() {
         let data = "Data".data(using: .utf8)!
 
         let client = APIClient()
-//        XCTAssertThrowsError(try client.verifyHTTPUrlResponse(data: data, response: self.requestErrorResponse))
+        XCTAssertThrowsError(try client.validateResponse(data: data, response: self.requestErrorResponse))
     }
 
-    func testAPIClientVerifyHTTPUrlResponseServerError() {
+    func testAPIClientValidateResponseServerError() {
         let data = "Data".data(using: .utf8)!
 
         let client = APIClient()
-//        XCTAssertThrowsError(try client.verifyHTTPUrlResponse(data: data, response: self.serverErrorResponse))
+        XCTAssertThrowsError(try client.validateResponse(data: data, response: self.serverErrorResponse))
     }
 
-    func testAPIClientDataTaskPublisherUnhandledHTTPStatusError() {
+    func testAPIClientValidateResponseUnhandledError() {
         let data = "Data".data(using: .utf8)!
 
         let client = APIClient()
-//        XCTAssertNoThrow(try client.verifyHTTPUrlResponse(data: data, response: self.validResponse))
+        XCTAssertThrowsError(try client.validateResponse(data: data, response: self.unhandledErrorResponse))
     }
 
-    static var verificationTests = [
-        ("testAPIClientVerifyHTTPUrlInvalidHTTResponse", testAPIClientVerifyHTTPUrlInvalidHTTResponse),
-        ("testAPIClientBuildAPIResponseNoThrow", testAPIClientBuildAPIResponseNoThrow),
-        ("testAPIClientBuildAPIResponseThrows", testAPIClientBuildAPIResponseThrows),
-        ("testAPIClientVerifyHTTPUrlResponseRedirectionError", testAPIClientVerifyHTTPUrlResponseRedirectionError),
-        ("testAPIClientVerifyHTTPUrlResponseRequestError", testAPIClientVerifyHTTPUrlResponseRequestError),
-        ("testAPIClientVerifyHTTPUrlResponseServerError", testAPIClientVerifyHTTPUrlResponseServerError)
+    static var validationTests = [
+        ("testAPIClientValidateResponseNoThrow", testAPIClientValidateResponseNoThrow),
+        ("testAPIClientValidateResponseNoThrowNoContent", testAPIClientValidateResponseNoThrowNoContent),
+        ("testAPIClientValidateResponseInvalidHTTResponse", testAPIClientValidateResponseInvalidHTTResponse),
+        ("testAPIClientValidateResponseRedirectionError", testAPIClientValidateResponseRedirectionError),
+        ("testAPIClientValidateResponseRequestError", testAPIClientValidateResponseRequestError),
+        ("testAPIClientValidateResponseServerError", testAPIClientValidateResponseServerError),
+        ("testAPIClientValidateResponseUnhandledError", testAPIClientValidateResponseUnhandledError)
     ]
 
     // MARK: - Combine Tests
@@ -312,7 +300,6 @@ final class APIClientTests: XCTestCase {
 
 
     static var combineTests = [
-        ("testAPIClientDataTaskPublisherUnhandledHTTPStatusError", testAPIClientDataTaskPublisherUnhandledHTTPStatusError),
         ("testAPIClientDataTaskPublisherFinishedSuccessfully", testAPIClientDataTaskPublisherFinishedSuccessfully),
         ("testAPIClientDataTaskPublisherFailureAPIError", testAPIClientDataTaskPublisherFailureAPIError),
         ("testAPIClientDataTaskPublisherFailureDecoding", testAPIClientDataTaskPublisherFailureDecoding),
