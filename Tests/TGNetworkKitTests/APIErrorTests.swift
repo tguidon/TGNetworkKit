@@ -126,6 +126,11 @@ final class APIErrorTests: XCTestCase {
         }
     }
 
+    func testAPIErrorInitUnhandled() {
+        let unhandledAPIError = APIError(MockError.failed("foo"))
+        XCTAssertEqual(unhandledAPIError, APIError.unhandled("foo"))
+    }
+
     static var apiErrorTests = [
         ("testAPIErrorNetworkingErrorEquality", testAPIErrorNetworkingErrorEquality),
         ("testAPIErrorServerErrorEquality", testAPIErrorServerErrorEquality),
@@ -138,6 +143,7 @@ final class APIErrorTests: XCTestCase {
         ("testAPIErrorFailedToBuildURLRequestURLEquality", testAPIErrorFailedToBuildURLRequestURLEquality),
         ("testAPIErrorDataIsNilEquality", testAPIErrorDataIsNilEquality),
         ("testAPIErrorUnhandledErrorEquality", testAPIErrorUnhandledErrorEquality),
-        ("testAPIErrorStatusCode", testAPIErrorStatusCode)
+        ("testAPIErrorStatusCode", testAPIErrorStatusCode),
+        ("testAPIErrorInitUnhandled", testAPIErrorInitUnhandled)
     ]
 }
