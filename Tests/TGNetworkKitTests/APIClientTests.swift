@@ -31,8 +31,8 @@ final class APIClientTests: XCTestCase {
     let dataURL = URL(fileURLWithPath: "/data")
     let mockResourceUrl = URL(string: "https://example.com")!
     let badMockResourceUrl = URL(string: "https://example.com/bad-data")!
-    let errorURL = URL(fileURLWithPath: "/TestError.testError")
-    let apiErrorURL = URL(fileURLWithPath: "https://example.com/api-error")
+    let errorURL = URL(fileURLWithPath: "/https://example.com/error")
+    let apiErrorURL = URL(string: "https://example.com/api-error")
 
     private var cancellables = Set<AnyCancellable>()
 
@@ -41,10 +41,11 @@ final class APIClientTests: XCTestCase {
         URLProtocolMock.dataURLs[dataURL] = "{\"key\":\"value\"}".data(using: .utf8)!
         URLProtocolMock.dataURLs[mockResourceUrl] = MockResource(id: "101").asData!
         URLProtocolMock.dataURLs[badMockResourceUrl] = "{\"this_isnt_right\":bool}".data(using: .utf8)!
+        URLProtocolMock.dataURLs[apiErrorURL] = "{\"key\":\"value\"}".data(using: .utf8)!//APIError.requestError(400, "Fail fail".data(using: .utf8))
 
         // Error URLs
         URLProtocolMock.errorURLs[errorURL] = TestError.testError
-        URLProtocolMock.errorURLs[apiErrorURL] = APIError.requestError(400, "Fail fail".data(using: .utf8))
+//        URLProtocolMock.errorURLs[apiErrorURL] = APIError.requestError(400, "Fail fail".data(using: .utf8))
 
         // Set up a configuration to use our mock protocol
         let config = URLSessionConfiguration.ephemeral
@@ -93,22 +94,22 @@ final class APIClientTests: XCTestCase {
     }
 
     func testAPIClientExecuteRequestFailurePerformDataTaskError() {
-//        let exp = expectation(description: "Request is made and model is returned.")
+        let exp = expectation(description: "Request is made and model is returned.")
 
-//        let client = APIClient(session: self.makeURLSession())
-//        let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
-//        client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
-//            var errorToTest: APIError?
-//            if case .failure(let error) = result {
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest)
-//
-//            exp.fulfill()
-//        }
-//
-//        wait(for: [exp], timeout: 3.0)
+        let client = APIClient(session: self.makeURLSession())
+        let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
+        client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
+            var errorToTest: APIError?
+            if case .failure(let error) = result {
+                errorToTest = error
+            }
+
+            XCTAssertNotNil(errorToTest)
+
+            exp.fulfill()
+        }
+
+        wait(for: [exp], timeout: 3.0)
     }
 
     func testAPIClientExecuteRequestFailureValidation() {
@@ -271,7 +272,8 @@ final class APIClientTests: XCTestCase {
             switch finish {
             case .finished:
                 XCTFail()
-            case .failure:
+            case .failure(let error):
+                print(error)
                 exp.fulfill()
             }
         }, receiveValue: { apiResponse in

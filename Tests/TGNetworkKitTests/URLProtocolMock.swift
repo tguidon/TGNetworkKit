@@ -42,7 +42,8 @@ class URLProtocolMock: URLProtocol {
         self.client?.urlProtocolDidFinishLoading(self)
     }
 
-    private func makeURLResponse(url: URL, statusCode: Int = 200) -> URLResponse {
+    private func makeURLResponse(url: URL) -> URLResponse {
+        let statusCode = url.absoluteString.contains("api-error") ? 400 : 200
         return HTTPURLResponse(
             url: url, statusCode: statusCode, httpVersion: nil, headerFields: nil
         )!
