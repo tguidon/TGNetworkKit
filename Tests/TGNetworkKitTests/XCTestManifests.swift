@@ -5,8 +5,9 @@ public func allTests() -> [XCTestCaseEntry] {
     return [
         testCase(APIClientTests.requestTests),
         testCase(APIClientTests.performTests),
+        testCase(APIClientTests.adaptTests),
         testCase(APIClientTests.handleDataTaskTests),
-        testCase(APIClientTests.parseDecodableTests),
+        testCase(APIClientTests.verificationTests),
         testCase(APIClientTests.combineTests),
 
         testCAse(APIErrorTests.apiErrorTests),

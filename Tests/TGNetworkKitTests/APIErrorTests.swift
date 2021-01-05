@@ -112,6 +112,20 @@ final class APIErrorTests: XCTestCase {
         XCTAssertNotEqual(error1, error2)
     }
 
+    func testAPIErrorStatusCode() {
+        let testCases: [(APIError, Int?)] = [
+            (APIError.serverError(500, nil), 500),
+            (APIError.redirectionError(300, nil), 300),
+            (APIError.serverError(400, nil), 400),
+            (APIError.unhandledHTTPStatus(999, nil), 999),
+            (APIError.dataIsNil, nil)
+        ]
+
+        testCases.forEach {
+            XCTAssertEqual($0.httpStatusCode, $1)
+        }
+    }
+
     static var apiErrorTests = [
         ("testAPIErrorNetworkingErrorEquality", testAPIErrorNetworkingErrorEquality),
         ("testAPIErrorServerErrorEquality", testAPIErrorServerErrorEquality),
@@ -123,6 +137,7 @@ final class APIErrorTests: XCTestCase {
         ("testAPIErrorParseErrorEquality", testAPIErrorParseErrorEquality),
         ("testAPIErrorFailedToBuildURLRequestURLEquality", testAPIErrorFailedToBuildURLRequestURLEquality),
         ("testAPIErrorDataIsNilEquality", testAPIErrorDataIsNilEquality),
-        ("testAPIErrorUnhandledErrorEquality", testAPIErrorUnhandledErrorEquality)
+        ("testAPIErrorUnhandledErrorEquality", testAPIErrorUnhandledErrorEquality),
+        ("testAPIErrorStatusCode", testAPIErrorStatusCode)
     ]
 }

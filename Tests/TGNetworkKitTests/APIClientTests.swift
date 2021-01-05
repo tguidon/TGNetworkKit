@@ -53,13 +53,11 @@ final class APIClientTests: XCTestCase {
 
     // MARK: - `execute()` tests
 
-    func testAPIClientRequestGetMockResource() {
+    func testAPIClientExecuteRequestSuccess() {
         let exp = expectation(description: "Request is made and model is returned.")
 
         let client = APIClient(session: self.makeURLSession())
         client.execute(request: APIRequest.buildMock()) { (result: Result<APIResponse<MockResource>, APIError>) in
-            exp.fulfill()
-
             var resource: MockResource?
             if case .success(let response) = result {
                 resource = response.value
@@ -67,36 +65,48 @@ final class APIClientTests: XCTestCase {
 
             XCTAssertNotNil(resource)
             XCTAssertEqual(resource, MockResource(id: "101"))
+
+            exp.fulfill()
         }
 
         wait(for: [exp], timeout: 3.0)
     }
 
-    func testAPIClientRequestThrowingAPIRequest() {
+    func testAPIClientExecuteRequestFailure() {
         let exp = expectation(description: "Request is made and model is returned.")
 
         let client = APIClient(session: self.makeURLSession())
         let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
         client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
-            exp.fulfill()
-
             var errorToTest: APIError?
             if case .failure(let error) = result {
                 errorToTest = error
             }
 
             XCTAssertNotNil(errorToTest)
+
+            exp.fulfill()
         }
 
         wait(for: [exp], timeout: 3.0)
     }
 
+    func testAPIClientExecuteRequestFailurePerformDataTaskError() {
+        XCTFail()
+    }
+
+    func testAPIClientExecuteRequestFailureValidation() {
+        XCTFail()
+    }
+
     static var requestTests = [
-        ("testAPIClientRequestGetMockResource", testAPIClientRequestGetMockResource),
-        ("testAPIClientRequestThrowingAPIRequest", testAPIClientRequestThrowingAPIRequest)
+        ("testAPIClientExecuteRequestSuccess", testAPIClientExecuteRequestSuccess),
+        ("testAPIClientExecuteRequestFailure", testAPIClientExecuteRequestFailure),
+        ("testAPIClientExecuteRequestFailurePerformDataTaskError", testAPIClientExecuteRequestFailurePerformDataTaskError),
+        ("testAPIClientExecuteRequestFailureValidation", testAPIClientExecuteRequestFailureValidation)
     ]
 
-    // MARK: - `perform()` tests
+    // MARK: - `performDataTask()` tests
 
     // This session is injected with an error, triggering `if let error`
     func testAPIClientPerformNetworkingError() {
@@ -108,6 +118,26 @@ final class APIClientTests: XCTestCase {
 
     static var performTests = [
         ("testAPIClientPerformNetworkingError", testAPIClientPerformNetworkingError),
+    ]
+
+    // MARK: - `adapt()` tests
+
+    func testAPIClientAdaptURLRequest() {
+        struct TestAdapter: RequestAdapter {
+            func adapt(_ urlRequest: inout URLRequest) {
+                urlRequest.url = URL(string: "adapted.com")
+            }
+        }
+        let client = APIClient(session: self.makeURLSession(), requestAdapters: [TestAdapter()])
+        let url = URL(string: "example.com")!
+        var urlRequest = URLRequest(url: url)
+        client.adapt(&urlRequest)
+
+        XCTAssertEqual(urlRequest.url, URL(string: "adapted.com"))
+    }
+
+    static var adaptTests = [
+        ("testAPIClientAdaptURLRequest", testAPIClientAdaptURLRequest),
     ]
 
     // MARK: - `handleDataTask()` tests
@@ -215,98 +245,6 @@ final class APIClientTests: XCTestCase {
         ("testAPIClientHandleDataTaskUnhandledHTTPStatusError", testAPIClientHandleDataTaskUnhandledHTTPStatusError)
     ]
 
-    // MARK: - `parseDecodable()` tests
-
-    func testAPIClientParseDecodableSuccess() {
-//        let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")
-//
-//        let resource = MockResource(id: "1")
-//        let encoder = JSONEncoder()
-//        encoder.outputFormatting = .prettyPrinted
-//        let data = try! encoder.encode(resource)
-//
-//        let result: Result<Data?, APIError> = .success(data)
-//
-//        let client = APIClient()
-//        client.parseDecodable(result: result) { (result: Result<MockResource, APIError> ) in
-//            exp.fulfill()
-//            var resource: MockResource?
-//            if case .success(let value) = result {
-//                resource = value
-//            }
-//
-//            XCTAssertNotNil(resource, "Success result did not return data")
-//            XCTAssertEqual(resource?.id, "1")
-//        }
-//
-//        wait(for: [exp], timeout: 3.0)
-    }
-
-    func testAPIClientParseDecodableSuccessIsDecodableError() {
-//        let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")
-//
-//        let result: Result<Data?, APIError> = .success("BadData".data(using: .utf8)!)
-//
-//        let client = APIClient()
-//        client.parseDecodable(result: result) { (result: Result<MockResource, APIError> ) in
-//            exp.fulfill()
-//            var errorToTest: APIError?
-//            if case .failure(let error) = result, case .decodingError = error {
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
-//        }
-//
-//        wait(for: [exp], timeout: 3.0)
-    }
-
-    func testAPIClientParseDecodableSuccessParseError() {
-//        let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")
-//
-//        let result: Result<Data?, APIError> = .success(nil)
-//
-//        let client = APIClient()
-//        client.parseDecodable(result: result) { (result: Result<MockResource, APIError> ) in
-//            exp.fulfill()
-//            var errorToTest: APIError?
-//            if case .failure(let error) = result, case .parseError = error {
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
-//        }
-//
-//        wait(for: [exp], timeout: 3.0)
-    }
-
-    func testAPIClientParseDecodableFailure() {
-//        let exp = expectation(description: "Result is parsed and then sent to DispatchQueue.")
-//
-//        let error = APIError.invalidResponse
-//        let result: Result<Data?, APIError> = .failure(error)
-//
-//        let client = APIClient()
-//        client.parseDecodable(result: result) { (result: Result<MockResource, APIError> ) in
-//            exp.fulfill()
-//            var errorToTest: APIError?
-//            if case .failure(let error) = result, case .invalidResponse = error {
-//                errorToTest = error
-//            }
-//
-//            XCTAssertNotNil(errorToTest, "Proper APIError was not returned, or result did not fail")
-//        }
-//
-//        wait(for: [exp], timeout: 3.0)
-    }
-
-    static var parseDecodableTests = [
-        ("testAPIClientParseDecodableSuccess", testAPIClientParseDecodableSuccess),
-        ("testAPIClientParseDecodableSuccessIsDecodableError", testAPIClientParseDecodableSuccessIsDecodableError),
-        ("testAPIClientParseDecodableSuccessParseError", testAPIClientParseDecodableSuccessParseError),
-        ("testAPIClientParseDecodableFailure", testAPIClientParseDecodableFailure)
-    ]
-
     func testAPIClientBuildAPIResponseNoThrow() {
         let apiRequest = APIRequest.buildMock()
 
@@ -334,6 +272,8 @@ final class APIClientTests: XCTestCase {
 //        let client = APIClient()
 //        XCTAssertNoThrow(try client.buildAPIResponse(apiRequest: apiRequest, data: data, response: self.validResponse!))
     }
+
+    // MARK: - Validation and Response
 
     func testAPIClientVerifyHTTPUrlInvalidHTTResponse() {
         let data = "Data".data(using: .utf8)!
@@ -369,6 +309,17 @@ final class APIClientTests: XCTestCase {
         let client = APIClient()
 //        XCTAssertNoThrow(try client.verifyHTTPUrlResponse(data: data, response: self.validResponse))
     }
+
+    static var verificationTests = [
+        ("testAPIClientVerifyHTTPUrlInvalidHTTResponse", testAPIClientVerifyHTTPUrlInvalidHTTResponse),
+        ("testAPIClientBuildAPIResponseNoThrow", testAPIClientBuildAPIResponseNoThrow),
+        ("testAPIClientBuildAPIResponseThrows", testAPIClientBuildAPIResponseThrows),
+        ("testAPIClientVerifyHTTPUrlResponseRedirectionError", testAPIClientVerifyHTTPUrlResponseRedirectionError),
+        ("testAPIClientVerifyHTTPUrlResponseRequestError", testAPIClientVerifyHTTPUrlResponseRequestError),
+        ("testAPIClientVerifyHTTPUrlResponseServerError", testAPIClientVerifyHTTPUrlResponseServerError)
+    ]
+
+    // MARK: - Combine Tests
 
     func testAPIClientDataTaskPublisherFinishedSuccessfully() {
         let exp = XCTestExpectation(description: "Waiting for data task publisher to return successfully")
@@ -462,13 +413,8 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 2.0)
     }
 
+
     static var combineTests = [
-        ("testAPIClientVerifyHTTPUrlInvalidHTTResponse", testAPIClientVerifyHTTPUrlInvalidHTTResponse),
-        ("testAPIClientBuildAPIResponseNoThrow", testAPIClientBuildAPIResponseNoThrow),
-        ("testAPIClientBuildAPIResponseThrows", testAPIClientBuildAPIResponseThrows),
-        ("testAPIClientVerifyHTTPUrlResponseRedirectionError", testAPIClientVerifyHTTPUrlResponseRedirectionError),
-        ("testAPIClientVerifyHTTPUrlResponseRequestError", testAPIClientVerifyHTTPUrlResponseRequestError),
-        ("testAPIClientVerifyHTTPUrlResponseServerError", testAPIClientVerifyHTTPUrlResponseServerError),
         ("testAPIClientDataTaskPublisherUnhandledHTTPStatusError", testAPIClientDataTaskPublisherUnhandledHTTPStatusError),
         ("testAPIClientDataTaskPublisherFinishedSuccessfully", testAPIClientDataTaskPublisherFinishedSuccessfully),
         ("testAPIClientDataTaskPublisherFailureAPIError", testAPIClientDataTaskPublisherFailureAPIError),

@@ -62,11 +62,6 @@ extension APIClient {
             .eraseToAnyPublisher()
     }
 
-    /// Adapts the given `URLRequest` via the given Apaptor array on client init.
-    internal func adapt(_ urlRequest: inout URLRequest) {
-        self.requestAdapters.forEach { $0.adapt(&urlRequest) }
-    }
-
     // MARK: - Result
 
     /**
@@ -78,11 +73,13 @@ extension APIClient {
         - completion: Handler resolves with Result<T: APIError>
      */
     public func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<APIResponse<T>, APIError>) -> Void) {
-        guard let request = requestBuilder.build(apiRequest: request) else {
+        guard var urlRequest = requestBuilder.build(apiRequest: request) else {
             completion(.failure(APIError.failedToBuildURLRequestURL)); return
         }
 
-        self.performDataTask(request: request) { (data, urlResponse, error) in
+        self.adapt(&urlRequest)
+
+        self.performDataTask(request: urlRequest) { (data, urlResponse, error) in
             guard error == nil else {
                 completion(.failure(error!.asAPIError)); return
             }
@@ -112,6 +109,11 @@ extension APIClient {
     }
 
     // MARK:- Shared Logic
+
+    /// Adapts the given `URLRequest` via the given Apaptor array on client init.
+    internal func adapt(_ urlRequest: inout URLRequest) {
+        self.requestAdapters.forEach { $0.adapt(&urlRequest) }
+    }
 
     /// Returns a `(Data, HTTPURLResponse)` tuple upon successful validate. All HTTP responses between
     /// 200-299 are considered valid.
