@@ -58,6 +58,7 @@ extension APIClient {
             .tryMap(self.validateResponse)
             .tryMap(self.buildResponse)
             .mapError(APIError.init)
+            .subscribe(on: DispatchQueue.global(), options: nil)
             .receive(on: DispatchQueue.main)
             .eraseToAnyPublisher()
     }
