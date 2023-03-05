@@ -7,9 +7,13 @@
 
 import Foundation
 
-struct URLRequestBuilder: RequestBuilder {
+public struct URLRequestBuilder: RequestBuilder {
 
-    func build(apiRequest: APIRequest) -> URLRequest? {
+    public init() {
+        
+    }
+
+    public func build(apiRequest: APIRequest) -> URLRequest? {
         var urlComponents = apiRequest.urlComponents
         /// Add query parameters
         urlComponents.queryItems = apiRequest.params
