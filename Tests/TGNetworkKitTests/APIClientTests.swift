@@ -128,11 +128,45 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 3.0)
     }
 
+    func testAPIClientAsyncMakeRequestSuccess() async throws {
+        let client = APIClient(session: self.makeURLSession())
+        let response: APIResponse<MockResource> = try await client.makeRequest(APIRequest.buildMock())
+
+        XCTAssertEqual(response.value.id, "101")
+    }
+
+    func testAPIClientAsyncMakeRequestFailure() async throws {
+        let client = APIClient(session: self.makeURLSession())
+        let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
+        do {
+            let _: APIResponse<MockResource> = try await client.makeRequest(apiRequest)
+        } catch {
+            guard let errorToTest = error as? APIError else {
+                XCTFail("Did not cast to APIError"); return
+            }
+            XCTAssertEqual(APIError.failedToBuildURLRequestURL, errorToTest)
+        }
+    }
+
+    func testAPIClientAsyncMakeRequestFailurePerformDataTaskError() async {
+        let client = APIClient(session: self.makeURLSession())
+        let apiRequest = APIRequest.buildMock(path: "/api-error")
+        do {
+            let _: APIResponse<MockResource> = try await client.makeRequest(apiRequest)
+        } catch {
+            XCTAssertNotNil(error as? APIError)
+        }
+    }
+
     static var requestTests = [
         ("testAPIClientMakeRequestSuccess", testAPIClientMakeRequestSuccess),
         ("testAPIClientMakeRequestFailure", testAPIClientMakeRequestFailure),
         ("testAPIClientMakeRequestFailurePerformDataTaskError", testAPIClientMakeRequestFailurePerformDataTaskError),
-        ("testAPIClientMakeRequestFailureValidation", testAPIClientMakeRequestFailureValidation)
+        ("testAPIClientMakeRequestFailureValidation", testAPIClientMakeRequestFailureValidation),
+
+        ("testAPIClientAsyncMakeRequestSuccess", testAPIClientAsyncMakeRequestSuccess),
+        ("testAPIClientAsyncMakeRequestFailure", testAPIClientAsyncMakeRequestFailure),
+        ("testAPIClientAsyncMakeRequestFailurePerformDataTaskError", testAPIClientAsyncMakeRequestFailurePerformDataTaskError)
     ]
 
     // MARK: - `performDataTask()` tests
