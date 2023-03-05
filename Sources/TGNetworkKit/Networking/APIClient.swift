@@ -23,7 +23,7 @@ final public class APIClient: NetworkingProtocol {
     /// Defaults to base `JSONDecoder` initializer
     internal let jsonDecoder: JSONDecoder
 
-    init(
+    public init(
         session: URLSession = .shared,
         requestBuilder: RequestBuilder = URLRequestBuilder(),
         requestAdapters: [RequestAdapter] = [],
