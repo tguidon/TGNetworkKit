@@ -1,5 +1,5 @@
 //
-//  File.swift
+//  Encodable+Extensions.swift
 //  
 //
 //  Created by Taylor Guidon on 7/1/19.
