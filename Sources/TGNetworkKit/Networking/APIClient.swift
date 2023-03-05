@@ -43,8 +43,6 @@ extension APIClient {
     /// Builds a new Publisher for making Decodable requests
     /// - Parameter request: Instance of an `APIRequest` with information on what request to make
     /// - Returns: Returns `AnyPublisher<APIResponse<T>, APIError>`
-    @available(iOS 13.0, *)
-    @available(OSX 10.15, *)
     public func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
         guard var urlRequest = requestBuilder.build(apiRequest: request) else {
             return Fail<APIResponse<T>, APIError>(

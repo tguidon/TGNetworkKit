@@ -8,8 +8,6 @@
 import Foundation
 import Combine
 
-@available(iOS 13.0, *)
-@available(OSX 10.15, *)
 /// Protocol used to define the APIClients dependencies and actions
 protocol NetworkingProtocol {
     var session: URLSession { get }
