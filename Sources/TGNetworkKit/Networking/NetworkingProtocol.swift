@@ -15,12 +15,12 @@ protocol NetworkingProtocol {
     var requestAdapters: [RequestAdapter] { get }
     var jsonDecoder: JSONDecoder { get }
 
-    func execute<T: Decodable>(
-        request: APIRequest,
+    func makeRequest<T: Decodable>(
+        _ request: APIRequest,
         completion: @escaping (Result<APIResponse<T>, APIError>) -> Void
     )
 
-    func buildPublisher<T: Decodable>(
-        for request: APIRequest
-    ) -> AnyPublisher<APIResponse<T>, APIError>
+    func makeRequest<T: Decodable>(_ request: APIRequest) async throws -> APIResponse<T>
+
+    func makeRequestPublisher<T: Decodable>(_ request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError>
 }

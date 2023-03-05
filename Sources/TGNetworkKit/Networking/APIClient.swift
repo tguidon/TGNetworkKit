@@ -34,16 +34,13 @@ final public class APIClient: NetworkingProtocol {
         self.requestAdapters = requestAdapters
         self.jsonDecoder = jsonDecoder
     }
-}
-
-extension APIClient {
 
     // MARK: - Combine
 
     /// Builds a new Publisher for making Decodable requests
     /// - Parameter request: Instance of an `APIRequest` with information on what request to make
     /// - Returns: Returns `AnyPublisher<APIResponse<T>, APIError>`
-    public func buildPublisher<T: Decodable>(for request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
+    public func makeRequestPublisher<T: Decodable>(_ request: APIRequest) -> AnyPublisher<APIResponse<T>, APIError> {
         guard var urlRequest = requestBuilder.build(apiRequest: request) else {
             return Fail<APIResponse<T>, APIError>(
                 error: APIError.failedToBuildURLRequestURL
@@ -67,7 +64,7 @@ extension APIClient {
     /// - Parameters:
     ///   - request: Instance of an `APIRequest` with information on what request to make
     ///   - completion: Handler resolves with Result<APIResponse<T>: APIError>
-    public func execute<T: Decodable>(request: APIRequest, completion: @escaping (Result<APIResponse<T>, APIError>) -> Void) {
+    public func makeRequest<T: Decodable>(_ request: APIRequest, completion: @escaping (Result<APIResponse<T>, APIError>) -> Void) {
         guard var urlRequest = requestBuilder.build(apiRequest: request) else {
             completion(.failure(APIError.failedToBuildURLRequestURL)); return
         }
@@ -89,10 +86,26 @@ extension APIClient {
         }
     }
 
+    public func makeRequest<T: Decodable>(_ request: APIRequest) async throws -> APIResponse<T> {
+        guard var urlRequest = requestBuilder.build(apiRequest: request) else {
+            throw APIError.failedToBuildURLRequestURL
+        }
+
+        self.adapt(&urlRequest)
+
+        let (data, urlResponse) = try await self.session.data(for: urlRequest)
+        let (responseData, httpURLResponse) = try self.validateResponse(data: data, response: urlResponse)
+        let response: APIResponse<T> = try self.buildResponse(forData: responseData, httpURLResponse: httpURLResponse)
+        return response
+    }
+}
+
+extension APIClient {
+
     /// Performs the URLRequest and handles the data task. Fires off the task.
     /// - Parameters:
     ///   - request: `URLRequest` passed in from `execute()` method
-    ///   - completion: <#completion description#>
+    ///   - completion: Handler resolves with `(Data?, URLResponse?, Error?)` completion block
     internal func performDataTask(request: URLRequest, completion: @escaping (Data?, URLResponse?, Error?) -> Void) {
         let task = session.dataTask(with: request) { (data, urlResponse, error) in
             completion(data, urlResponse, error)

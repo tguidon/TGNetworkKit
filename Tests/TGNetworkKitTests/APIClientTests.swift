@@ -43,7 +43,6 @@ final class APIClientTests: XCTestCase {
 
         // Error URLs
         URLProtocolMock.errorURLs[errorURL] = TestError.testError
-//        URLProtocolMock.errorURLs[apiErrorURL] = APIError.requestError(400, "Fail fail".data(using: .utf8))
 
         // Set up a configuration to use our mock protocol
         let config = URLSessionConfiguration.ephemeral
@@ -51,13 +50,13 @@ final class APIClientTests: XCTestCase {
         return URLSession(configuration: config)
     }
 
-    // MARK: - `execute()` tests
+    // MARK: - `makeRequest()` tests
 
-    func testAPIClientExecuteRequestSuccess() {
+    func testAPIClientMakeRequestSuccess() {
         let exp = expectation(description: "Request is made and a response is returned.")
 
         let client = APIClient(session: self.makeURLSession())
-        client.execute(request: APIRequest.buildMock()) { (result: Result<APIResponse<MockResource>, APIError>) in
+        client.makeRequest(APIRequest.buildMock()) { (result: Result<APIResponse<MockResource>, APIError>) in
             var resource: MockResource?
             if case .success(let response) = result {
                 resource = response.value
@@ -72,12 +71,12 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 3.0)
     }
 
-    func testAPIClientExecuteRequestFailure() {
+    func testAPIClientMakeRequestFailure() {
         let exp = expectation(description: "Request is made and request builder error is returned")
 
         let client = APIClient(session: self.makeURLSession())
         let apiRequest = APIRequest.buildMock(host: "example.com", path: "auth/login")
-        client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
+        client.makeRequest(apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
             var errorToTest: APIError?
             if case .failure(let error) = result {
                 errorToTest = error
@@ -91,12 +90,12 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 3.0)
     }
 
-    func testAPIClientExecuteRequestFailurePerformDataTaskError() {
+    func testAPIClientMakeRequestFailurePerformDataTaskError() {
         let exp = expectation(description: "Request is made and url sessis returned.")
 
         let client = APIClient(session: self.makeURLSession())
         let apiRequest = APIRequest.buildMock(path: "/api-error")
-        client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
+        client.makeRequest(apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
             var errorToTest: APIError?
             if case .failure(let error) = result {
                 errorToTest = error
@@ -110,12 +109,12 @@ final class APIClientTests: XCTestCase {
         wait(for: [exp], timeout: 3.0)
     }
 
-    func testAPIClientExecuteRequestFailureValidation() {
+    func testAPIClientMakeRequestFailureValidation() {
         let exp = expectation(description: "Request is made and validation fails returned.")
 
         let client = APIClient(session: self.makeURLSession())
         let apiRequest = APIRequest.buildMock(path: "/error")
-        client.execute(request: apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
+        client.makeRequest(apiRequest) { (result: Result<APIResponse<MockResource>, APIError>) in
             var errorToTest: APIError?
             if case .failure(let error) = result {
                 errorToTest = error
@@ -130,10 +129,10 @@ final class APIClientTests: XCTestCase {
     }
 
     static var requestTests = [
-        ("testAPIClientExecuteRequestSuccess", testAPIClientExecuteRequestSuccess),
-        ("testAPIClientExecuteRequestFailure", testAPIClientExecuteRequestFailure),
-        ("testAPIClientExecuteRequestFailurePerformDataTaskError", testAPIClientExecuteRequestFailurePerformDataTaskError),
-        ("testAPIClientExecuteRequestFailureValidation", testAPIClientExecuteRequestFailureValidation)
+        ("testAPIClientMakeRequestSuccess", testAPIClientMakeRequestSuccess),
+        ("testAPIClientMakeRequestFailure", testAPIClientMakeRequestFailure),
+        ("testAPIClientMakeRequestFailurePerformDataTaskError", testAPIClientMakeRequestFailurePerformDataTaskError),
+        ("testAPIClientMakeRequestFailureValidation", testAPIClientMakeRequestFailureValidation)
     ]
 
     // MARK: - `performDataTask()` tests
@@ -242,7 +241,7 @@ final class APIClientTests: XCTestCase {
         let client = APIClient(session: self.makeURLSession())
 
         typealias TestPublisher = AnyPublisher<APIResponse<MockResource>, APIError>
-        let publisher: TestPublisher = client.buildPublisher(for: apiRequest)
+        let publisher: TestPublisher = client.makeRequestPublisher(apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -265,7 +264,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.makeRequestPublisher(apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -289,7 +288,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.makeRequestPublisher(apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
@@ -312,7 +311,7 @@ final class APIClientTests: XCTestCase {
 
         let client = APIClient(session: self.makeURLSession())
 
-        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.buildPublisher(for: apiRequest)
+        let publisher: AnyPublisher<APIResponse<MockResource>, APIError> = client.makeRequestPublisher(apiRequest)
         let cancellable = publisher.sink(receiveCompletion: { finish in
             switch finish {
             case .finished:
