@@ -8,6 +8,6 @@
 import Foundation
 
 public struct APIResponse<T: Decodable> {
-    let value: T
-    let response: URLResponse
+    public let value: T
+    public let response: HTTPURLResponse
 }
